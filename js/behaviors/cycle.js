@@ -1,0 +1,50 @@
+// CYCLE: For sprites that have a spritesheet artist, this behavior
+//        advances the sprite artist through the sprite's images.
+//        
+//        The behavior shows each cell for the specified duration.
+//        When the behavior has cycled through all of the cells, it
+//        pauses for the specified interval before starting the whole
+//        process again.
+
+/*
+wielDraaiBehavior = function () {
+   
+};
+
+wielDraaiBehavior.prototype = {
+      execute: function (sprite, now, fps, context, 
+                         lastAnimationFrameTime) {
+         sprite.myData.angle += sprite.myData.rotation_speed * (now - lastAnimationFrameTime) / 1000;
+		 
+      }
+   };*/
+
+
+CycleBehavior = function (duration, interval) {
+   this.duration = duration || 0;  //  milliseconds
+   this.interval = interval || 0;
+   this.lastAdvance = 0;
+};
+
+CycleBehavior.prototype = {
+   execute: function (sprite, 
+                         now, 
+                         fps, 
+                         context, 
+                         lastAnimationFrameTime) {
+      if (this.lastAdvance === 0) {
+         this.lastAdvance = now;
+      }
+
+      if (this.interval && sprite.artist.cellIndex === 0) {
+         if (now - this.lastAdvance > this.interval) {
+            sprite.artist.advance();
+			      this.lastAdvance = now;
+		     }         
+      }
+      else if (now - this.lastAdvance > this.duration) {
+         sprite.artist.advance();
+         this.lastAdvance = now;
+      }
+   }
+};

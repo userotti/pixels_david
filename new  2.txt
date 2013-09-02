@@ -1,0 +1,42 @@
+/*
+	this.ball_radius = 2;
+	
+	this.ball_x = 50;
+	this.ball_y = 50;
+
+	this.velx = 2;//Math.random()*5 - Math.random()*5;
+	this.vely = 0.5;//Math.random()*2 - Math.random()*5 - 2;
+	
+	this.accx = 0;
+	this.accy = 0.1;*/  values
+	
+	
+	move function
+	
+	this.ball_x = this.ball_x + this.velx;
+		this.ball_y = this.ball_y + this.vely;
+		
+		this.velx = this.velx + this.accx; 
+		this.vely = this.vely + this.accy;
+		
+		if (this.ball_x+this.ball_radius > this.smallCanvasWidth){
+			this.ball_x = this.smallCanvasWidth - this.ball_radius;
+			this.velx = (-1 * this.velx);
+		}
+	
+		if (this.ball_x-this.ball_radius < 0){
+			this.ball_x = 0 + this.ball_radius;
+			this.velx = (-1 * this.velx);
+		}
+		
+		if (this.ball_y+this.ball_radius > this.smallCanvasHeight){
+			this.ball_y = this.smallCanvasHeight - this.ball_radius;
+			this.vely = (-1 * this.vely)*0.9;
+			this.velx = this.velx*0.99;
+		}	
+	
+	
+	
+	
+	
+	

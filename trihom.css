@@ -1,0 +1,27 @@
+
+#arena {
+   margin: 0 auto;
+   width: 802px;
+   height: 520px;
+   
+}
+
+#game-canvas {
+   border: 0px solid blue; 
+}
+         
+#score {
+   font: 46px fantasy;
+   text-align: center;
+   color: #000;
+   
+}
+ 
+#fps {
+   position: absolute;
+   margin-top: -2em;
+   z-index: 1;
+   color:  #000;
+   
+   font: bold 20px fantasy;
+}
