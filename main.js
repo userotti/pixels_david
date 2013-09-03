@@ -1,6 +1,7 @@
 
 //var Bullet = function () {
-
+GAMESPEED = 1000;
+BULLETSPEED = 1;
 
 var Paratrooper = function () {
    
@@ -8,9 +9,13 @@ var Paratrooper = function () {
 	
 	this.smallCanvasWidth = 200;
 	this.smallCanvasHeight = 120;
-	
+	//this.GAMESPEED = 1000;
 	this.canvas_upscale = 4; //vier is beter
-   
+	this.MAXBULLETS = 9;
+	this.MOONRAV = 40;
+	this.CHARGE_FACTOR = 1;
+	//this.MOONRAV = 0.02;
+	
 	//Canvas Creation..................
 	
 	this.klein_canvas = document.createElement( 'canvas' );
@@ -83,39 +88,209 @@ var Paratrooper = function () {
 	this.trokkieData =  {x: 150,  y: 90, speed:30};
 	
 	this.grootwielData = {x: 18, y:11, angle:0, radius:4.5, rotation_speed:0};
-	this.grootwielData.rotation_speed = (1 / this.grootwielData.radius) * this.trokkieData.speed;
+	this.grootwielData.rotation_speed = ((1 / this.grootwielData.radius) * this.trokkieData.speed);
 	
 	this.kleinwielData = {x: 2, y:13, angle:23, radius:3.5, rotation_speed:0};
-	this.kleinwielData.rotation_speed = (1 / this.kleinwielData.radius) * this.trokkieData.speed;
+	this.kleinwielData.rotation_speed = ((1 / this.kleinwielData.radius) * this.trokkieData.speed);
 	
-	this.turretData = { x: 9.5, y:6.5, width: 2.3, length:9,  angle: Math.PI+0.5, color:'#5F5F5F'};
+	this.turretData = { 
+	
+	x: 9.5, 
+	y:6.5, 
+	width: 2.3, 
+	length:9,  
+	angle: Math.PI+0.5, 
+	color:'#5F5F5F',
+	
+	
+	//HIERIE VIER HANG AF VAN this.MOONGRAV!!
+	
+	charge_level: 2*this.CHARGE_FACTOR,
+	charge_rate: 100*this.CHARGE_FACTOR,
+	base_charge_level: 2*this.CHARGE_FACTOR,
+	max_charge_level: 100*this.CHARGE_FACTOR,
+	
+	cooldown: 0,
+	max_cooldown: 100, // recharge points
+	cooldown_recharge: 100, //recharge points per second
+	
+	charging : false,
+	
+	/*  SONDER GAME SPEED
+	x: 9.5, 
+	y:6.5, 
+	width: 2.3, 
+	length:9,  
+	angle: Math.PI+0.5, 
+	color:'#5F5F5F',
+	charge_level: 0.5,
+	charge_rate: 0.02,
+	base_charge_level: 0.5,
+	max_charge_level: 2.5,
+	cooldown: 0,
+	max_cooldown: 100,
+	cooldown_recharge: 1,*/
+	};
+	
+	this.gageData = { 
+	
+	x: 5, 
+	y:10.5, 
+	width: 1, 
+	
+	middle:0,
+	length:9,  
+	
+	color1:'#605743', //32,23,19
+	color2:'#201713', //32,23,19
+	color3:'#ff3411',
+	
+	
+	
+	};
+	
+	
+	
+	this.bulletData = [
+	
+	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#887634'},
+	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#887454'},
+	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#896156'},
+	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#896145'},
+	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#887634'},
+	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#896156'},
+	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#887465'},
+	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#896156'},
+	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#887434'},
+	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#887654'},
+	
+	];
+	
 	
 	
 	this.trokkieSprite;
 	this.grootwielSprite;
 	this.kleinwielSprite;
 	this.turretSprite;
+	this.gageSprite;
 	
-	
-	
+	this.bulletCount = 0;
+	this.bulletsSprites = [];
 	this.sprites = [];
 	
+	
+	this.turretBehavior = {
+      execute: function (sprite, now, fps, context, 
+                         lastAnimationFrameTime) {
+         if (sprite.myData.cooldown < sprite.myData.max_cooldown) 
+		sprite.myData.cooldown += sprite.myData.cooldown_recharge * ((now - lastAnimationFrameTime) / GAMESPEED);
+		
+		if ((sprite.myData.charging == true)&&(sprite.myData.charge_level < sprite.myData.max_charge_level)){
+		 sprite.myData.charge_level += sprite.myData.charge_rate * ((now - lastAnimationFrameTime) / GAMESPEED);
+			
+		}else{
+		//sprite.myData.charge_level=sprite.myData.base_charge_level;
+		}
+      }
+   };
 	
 	this.wielDraaiBehavior = {
       execute: function (sprite, now, fps, context, 
                          lastAnimationFrameTime) {
-         sprite.myData.angle += sprite.myData.rotation_speed * (now - lastAnimationFrameTime) / 1000;
+         sprite.myData.angle += sprite.myData.rotation_speed * ((now - lastAnimationFrameTime) / GAMESPEED);
 		 
       }
    };
+	this.bulletBehavior = {
+      execute: function (sprite, now, fps, context, 
+                         lastAnimationFrameTime) {
+		sprite.myData.velx += sprite.myData.accx * ((now - lastAnimationFrameTime) / GAMESPEED);
+		sprite.myData.vely += sprite.myData.accy * ((now - lastAnimationFrameTime) / GAMESPEED);        
+		
+		
+		
+	    sprite.myData.x += sprite.myData.velx * ((now - lastAnimationFrameTime) / GAMESPEED);
+		sprite.myData.y += sprite.myData.vely * ((now - lastAnimationFrameTime) / GAMESPEED);
+		  
+		
+		  
+		
+      }
+   };
+   
+   
+   //Artists
+  
+    this.gageArtist = {
+      draw: function (sprite, context) {
+        
+         
+        sprite.left = sprite.myData.x + sprite.myTrokkieData.x;
+		sprite.top = sprite.myData.y + sprite.myTrokkieData.y;
+		sprite.myData.middle = ((sprite.myTurretData.charge_level)/(sprite.myTurretData.max_charge_level)) * sprite.myData.length
+		
+		console.log(sprite.myData.middle);
+		
+		context.save();
+		
+		context.beginPath();
+		context.lineWidth = sprite.myData.width;
+		context.moveTo(sprite.left,sprite.top);
+		context.lineTo(sprite.left+sprite.myData.middle, sprite.top);
+		
+		if (sprite.myTurretData.charge_level > sprite.myTurretData.max_charge_level)
+		context.strokeStyle = sprite.myData.color3;
+		else
+		context.strokeStyle = sprite.myData.color1;
+		
+		context.stroke();
+		
+		
+		
+		
+		context.beginPath();
+		context.lineWidth = sprite.myData.width;
+		context.moveTo(sprite.left+sprite.myData.middle,sprite.top);
+		context.lineTo(sprite.left+sprite.myData.length, sprite.top);
+		
+		context.strokeStyle = sprite.myData.color2;
+		context.stroke();
+		
+		
+		
+		if (sprite.myTurretData.cooldown >= sprite.myTurretData.max_cooldown)
+		context.fillStyle = '#00FF00';
+		else
+		context.fillStyle = '#FF0000';
+		
+		context.fillRect(sprite.left+sprite.myData.length+1, sprite.top-5.5, 1, 1);
+		context.restore();
+		
+      }
+   };
 	
+	
+	this.bulletArtist = {
+      draw: function (sprite, context) {
+        
+         
+        sprite.left = sprite.myData.x;
+		sprite.top = sprite.myData.y;
+		
+		context.fillStyle = sprite.myData.color;
+		context.fillRect(sprite.left, sprite.top, sprite.myData.radius, sprite.myData.radius);
+		
+      }
+   };
+   
 };
   
 
 Paratrooper.prototype = {
     createSprites: function () {
       this.createTrokkieSprites(); 
-     // this.positionAllSprites();
+      
+	 // this.positionAllSprites();
       this.addSpritesToSpriteArray();
     
 	},
@@ -124,28 +299,16 @@ Paratrooper.prototype = {
       
 	  this.sprites.push(this.turretSprite);
       this.sprites.push(this.trokkieSprite);
+	  this.sprites.push(this.gageSprite);
       this.sprites.push(this.grootwielSprite);
 	  this.sprites.push(this.kleinwielSprite);
-     
+    
+	
+
+	
     },
    
-/*   
-	positionSprite: function (sprite, spriteData) {
-     
-           sprite.left  = spriteData.x;
-           sprite.top = spriteData.y;
-     
-	},
-   
-    	
-	positionAllSprites: function() {  
-     
-	  this.positionSprite(this.trokkieSprite, this.trokkieData);
-	  this.positionSprite(this.grootwielSprite, this.grootwielData);
-	  this.positionSprite(this.kleinwielSprite, this.kleinwielData);
-	  this.positionSprite(this.turretSprite, this.turretData);
-	  
-	},*/
+
     
 	createTrokkieSprites: function () {
 		
@@ -188,13 +351,105 @@ Paratrooper.prototype = {
 												
 		//
 		
-		this.turretSprite = new Sprite('turret', new turretArtist());
+		this.turretSprite = new Sprite('turret', new turretArtist(), [this.turretBehavior]);
 		
 		this.turretSprite.myData = this.turretData; 
-		this.turretSprite.myTrokkieData = this.trokkieData;       
+		this.turretSprite.myTrokkieData = this.trokkieData;   
+
+		this.gageSprite = new Sprite('gage', this.gageArtist);
+		
+		this.gageSprite.myData = this.gageData; 
+		this.gageSprite.myTrokkieData = this.trokkieData;
+		this.gageSprite.myTurretData = this.turretData;
       
 	},
 	
+	
+	
+	createBulletSprite : function () {
+	
+		var bulletSprite;
+	
+		if (this.bulletCount < this.MAXBULLETS){
+			this.bulletCount += 1;
+		}
+		else{
+			this.bulletCount = 0;
+	
+		}
+		
+		//THIS IS WRONG!!!!
+		bulletSprite = new Sprite('bullet',
+							  this.bulletArtist, [this.bulletBehavior]);	
+		 					  
+		bulletSprite.myData = this.bulletData[this.bulletCount];
+		bulletSprite.myTurretData = this.turretData;
+		
+		bulletSprite.myData.power = this.turretData.charge_level;
+		bulletSprite.myData.accy = this.MOONRAV;
+		
+		
+		bulletSprite.myData.x = this.trokkieData.x + bulletSprite.myTurretData.x + Math.cos(bulletSprite.myTurretData.angle)*bulletSprite.myTurretData.length;
+		bulletSprite.myData.y = this.trokkieData.y + bulletSprite.myTurretData.y + Math.sin(bulletSprite.myTurretData.angle)*bulletSprite.myTurretData.length;
+		
+		bulletSprite.myData.velx = Math.cos(bulletSprite.myTurretData.angle)*bulletSprite.myData.power;
+		bulletSprite.myData.vely = Math.sin(bulletSprite.myTurretData.angle)*bulletSprite.myData.power;
+		
+		this.bulletsSprites.splice(this.bulletCount,1,bulletSprite);
+		
+		
+	
+	},
+	
+	
+	
+	bulletCollision : function(){
+	 var sprite;
+
+      for (var i=0; i < this.bulletsSprites.length; ++i) {
+         sprite = this.bulletsSprites[i];
+		 
+		 if (sprite.myData.y > 110){
+		
+		  
+		  this.bulletsSprites[i].visible = false;	
+		  //console.log("hallo");
+		  
+		  
+		 
+		 }
+		 
+		 
+		} 
+
+		
+	
+	},
+	
+	
+	chargeTurret: function(){
+		if (this.turretData.charge_level < this.turretData.max_charge_level)
+		this.turretData.charging = true;
+		
+		
+		
+		
+		
+		
+		
+		
+	},
+		
+	shootBullet: function(){
+		
+		if (this.turretData.cooldown >= this.turretData.max_cooldown)
+			this.createBulletSprite();
+		
+		this.turretData.charge_level = this.turretData.base_charge_level;
+		this.turretData.cooldown = 0;
+		this.turretData.charging = false;
+		
+	},
 	isSpriteInView: function(sprite) {
       
 	  
@@ -204,7 +459,26 @@ Paratrooper.prototype = {
              sprite.left < sprite.hOffset + this.klein_canvas.width;
     },
 
-    //for the next image in the sprite sheet animation
+     
+	updateBulletSprites: function (now) {
+      var sprite;
+
+      for (var i=0; i < this.bulletsSprites.length; ++i) {
+         sprite = this.bulletsSprites[i];
+
+         if (sprite.visible && this.isSpriteInView(sprite)) {
+            sprite.update(now, 
+             this.fps, 
+             this.ctx,
+             this.lastAnimationFrameTime);
+         } else
+		 {
+			
+			
+		 }
+      }
+    },
+	
 	updateSprites: function (now) {
       var sprite;
 
@@ -219,7 +493,28 @@ Paratrooper.prototype = {
          }
       }
     },
+	
+	drawBullets: function() {
+      var sprite;
+	
+	  for (var i=0; i < this.bulletsSprites.length; ++i) {
+         sprite = this.bulletsSprites[i];
+				 
+		
+         if (sprite.visible && this.isSpriteInView(sprite)) {
+          
+			this.ctx.translate(-sprite.hOffset, 0);
+            
+			sprite.draw(this.ctx);
+			
+            this.ctx.translate(sprite.hOffset, 0);
+         } 
+		 
 
+		 
+      }
+    },
+	
     drawSprites: function() {
       var sprite;
 	
@@ -227,6 +522,8 @@ Paratrooper.prototype = {
       for (var i=0; i < this.sprites.length; ++i) {
          sprite = this.sprites[i];
 		
+		 
+		 
 		 /*console.log(sprite.visible + "sprite.visible");	
 		 console.log(this.isSpriteInView(sprite) + "this.isSpriteInView(sprite)");
 		 console.clear*/
@@ -237,9 +534,28 @@ Paratrooper.prototype = {
 			sprite.draw(this.ctx);
 			
             this.ctx.translate(sprite.hOffset, 0);
-         }
+         } 
       }
     },
+	
+	small_draw: function(now){
+		
+				
+		this.drawBackground();
+		this.updateSprites(now);
+        this.updateBulletSprites(now);
+		this.bulletCollision();
+		
+		
+		
+		
+		this.drawSprites();
+		this.drawBullets();
+		this.drawForeground();
+		
+	
+		
+	},
 	
 	draw: function (now) {
 	  
@@ -252,23 +568,7 @@ Paratrooper.prototype = {
 	  this.grootmaak();
 	},
    
-    keyboard: function() {
-	
-		//if (Key.isDown(Key.UP)) this.moveUp();
-		if (Key.isDown(Key.DOWN)) this.trokkieData.x -= 1;
-		
-		
-		if (Key.isDown(Key.LEFT)) 
-		if (this.turretData.angle > (Math.PI))
-			this.turretData.angle = this.turretData.angle - 0.04;
-		
-			
-		if (Key.isDown(Key.RIGHT)) 
-		if (this.turretData.angle < (Math.PI+(Math.PI/1.5)))
-			this.turretData.angle = this.turretData.angle + 0.04;
-				  
-										
-	},
+    
 	
 	
 	
@@ -276,8 +576,8 @@ Paratrooper.prototype = {
 	
     setStartBackgroundOffset: function(now) {
 	   
-	   this.stars_offset1 += this.stars_vel * (now - this.lastAnimationFrameTime) / 1000;
-	   this.stars_offset2 += this.stars_vel * (now - this.lastAnimationFrameTime) / 1000;
+	   this.stars_offset1 += this.stars_vel * (now - this.lastAnimationFrameTime) / GAMESPEED;
+	   this.stars_offset2 += this.stars_vel * (now - this.lastAnimationFrameTime) / GAMESPEED;
 
 	   if (this.stars_offset1 > this.background_image_width) {
 		  
@@ -288,8 +588,8 @@ Paratrooper.prototype = {
 		  this.stars_offset2 = this.stars_offset1 - this.background_image_width
 		  }  
 		  
-	   this.mountains_offset1 += this.mountains_vel * (now - this.lastAnimationFrameTime) / 1000;
-	   this.mountains_offset2 += this.mountains_vel * (now - this.lastAnimationFrameTime) / 1000;
+	   this.mountains_offset1 += this.mountains_vel * (now - this.lastAnimationFrameTime) / GAMESPEED;
+	   this.mountains_offset2 += this.mountains_vel * (now - this.lastAnimationFrameTime) / GAMESPEED;
 
 	   if (this.mountains_offset1 > this.background_image_width) {
 		  
@@ -300,8 +600,8 @@ Paratrooper.prototype = {
 		  this.mountains_offset2 = this.mountains_offset1 - this.background_image_width
 		  }    
 		  
-		this.rocks_offset1 += this.rocks_vel * (now - this.lastAnimationFrameTime) / 1000;
-	    this.rocks_offset2 += this.rocks_vel * (now - this.lastAnimationFrameTime) / 1000;
+		this.rocks_offset1 += this.rocks_vel * (now - this.lastAnimationFrameTime) / GAMESPEED;
+	    this.rocks_offset2 += this.rocks_vel * (now - this.lastAnimationFrameTime) / GAMESPEED;
 
 	    if (this.rocks_offset1 > this.background_image_width) {
 		  
@@ -358,17 +658,7 @@ Paratrooper.prototype = {
 	
 	
 	
-	small_draw: function(now){
-		
-				
-		this.drawBackground();
-		this.updateSprites(now);
-        this.drawSprites();
-		this.drawForeground();
-		
 	
-		
-	},
 	
 	
 	
@@ -474,9 +764,33 @@ Paratrooper.prototype = {
 	  
 	  paratrooper.constructor();
 	  requestNextAnimationFrame(this.animate);
-   }
+   },
+
+   
+	keyboard: function() {
+		
+			//if (Key.isDown(Key.UP)) this.moveUp();
+			if (Key.isDown(Key.a)){
+			//console.log("hallo");
+			this.chargeTurret();
+			} 
+			
+			
+			if (Key.isDown(Key.LEFT)) 
+			if (this.turretData.angle > (Math.PI))
+				this.turretData.angle = this.turretData.angle - 0.04;
+			
+				
+			if (Key.isDown(Key.RIGHT)) 
+			if (this.turretData.angle < (Math.PI+(Math.PI/1.5)))
+				this.turretData.angle = this.turretData.angle + 0.04;
+					  
+											
+		},   
 };
 // daai anner bra se se shit.....http://nokarma.org/2011/02/27/javascript-game-development-keyboard-input/index.html
+
+
 
 var Key = {
   _pressed: {},
@@ -485,6 +799,7 @@ var Key = {
   UP: 38,
   RIGHT: 39,
   DOWN: 40,
+  a : 65,
   
   isDown: function(keyCode) {
     return this._pressed[keyCode];
@@ -492,9 +807,11 @@ var Key = {
   
   onKeydown: function(event) {
     this._pressed[event.keyCode] = true;
+	
   },
   
   onKeyup: function(event) {
+	
     delete this._pressed[event.keyCode];
   }
 };
@@ -505,12 +822,23 @@ var Key = {
 	window.addEventListener('keyup', function(event) { Key.onKeyup(event); }, false);
 	window.addEventListener('keydown', function(event) { Key.onKeydown(event); }, false);
 	
+	window.onkeyup = function (e) {
+	   var key = e.keyCode;
+		
+	   if (key === 65) { // 'd' or left arrow
+		 
+		 paratrooper.shootBullet();
+		  
+	   }
+		
+	
+	}
 	window.onkeydown = function (e) {
 	   var key = e.keyCode;
 
 	   if (key === 68 || key === 37) { // 'd' or left arrow
-		 // paratrooper.turretData.angle = paratrooper.turretData.angle - 0.04;
-		  
+		 
+		 
 		  
 	   }
 	   else if (key === 75 || key === 39) { // 'k' or right arrow

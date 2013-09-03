@@ -14,7 +14,6 @@ wielArtist.prototype = {
       var cell = this.cells[this.cellIndex];
 	// console.log("artist" + this.wielData.x);
 	 
-	console.log("sprite.myData.anlge: in artist" + sprite.myData.angle); 
 	
 	 sprite.left = sprite.myData.x + sprite.myTrokkieData.x;
 	 sprite.top = sprite.myData.y + sprite.myTrokkieData.y;
@@ -74,6 +73,9 @@ turretArtist.prototype = {
 			context.stroke();
 		
 		context.restore();
+		
+		
+		
       /*context.drawImage(this.spritesheet, cell.left, cell.top,
                                           cell.width, cell.height,
                                           sprite.left, sprite.top,
