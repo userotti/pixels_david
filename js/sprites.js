@@ -85,6 +85,42 @@ turretArtist.prototype = {
   
 };
 
+
+SpriteSheetArtist1 = function (spritesheet, cells) {
+   this.cells = cells;
+   this.spritesheet = spritesheet;
+   this.cellIndex = 0;
+};
+
+SpriteSheetArtist1.prototype = {
+   draw: function (sprite, context) {
+      var cell = this.cells[this.cellIndex];
+	 
+	  
+	  sprite.left = sprite.myData.x; 
+	  sprite.top = sprite.myData.y;
+	 // console.log(cell.left + "," + cell.top + "," + cell.width + "," + cell.height + ","+ sprite.left + "," + sprite.top + "," + cell.width + "," + cell.height );
+
+	  //  console.clear();
+      context.drawImage(this.spritesheet, cell.left, cell.top,
+                                          cell.width, cell.height,
+                                          sprite.left, sprite.top,
+                                          cell.width, cell.height);
+   },
+
+   advance: function () {
+      if (this.cellIndex === this.cells.length-1) {
+         //this.cellIndex = 0;
+		 console.log("POES");
+      }
+      else {
+         this.cellIndex++;
+      }
+   }
+};
+
+
+
 SpriteSheetArtist = function (spritesheet, cells) {
    this.cells = cells;
    this.spritesheet = spritesheet;
@@ -202,7 +238,10 @@ Sprite.prototype = {
    },
 
    update: function (now, fps, context, lastAnimationFrameTime) {
-      for (var i = 0; i < this.behaviors.length; ++i) {
+      
+	  
+	  for (var i = 0; i < this.behaviors.length; ++i) {
+	  if (this.type ==  'EXP') console.log("jou!");
          this.behaviors[i].execute(this, 
                                    now, 
                                    fps, 

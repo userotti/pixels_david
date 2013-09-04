@@ -1,6 +1,7 @@
 
 //var Bullet = function () {
-GAMESPEED = 1000;
+GAMESPEED_BASE = 900;
+GAMESPEED = GAMESPEED_BASE;
 BULLETSPEED = 1;
 
 var Paratrooper = function () {
@@ -83,9 +84,52 @@ var Paratrooper = function () {
 	this.kleinwielCell = [{ left: 0,   top: 216, 
         width: 7, height: 7 }];
 	
+	
+	this.groundEXP_WIDTH = 17;
+	this.groundEXP_HEIGHT = 8;
+	
+	this.groundEXPCells = [
+      { left: 0, top: 223, 
+        width: 17, height: 8},
+
+      { left: this.groundEXP_WIDTH, top: 223, 
+        width: 17, height: 8 },
+
+      { left: this.groundEXP_WIDTH*2, top: 223, 
+        width: 17, height: 8 },
+
+      { left: this.groundEXP_WIDTH*3, top: 223, 
+        width: 17, height: 8 },
+	
+      { left: this.groundEXP_WIDTH*4, top: 223, 
+        width: 17, height: 8},
+
+      { left: this.groundEXP_WIDTH*5, top: 223, 
+        width: 17, height: 8 },
+
+      { left: this.groundEXP_WIDTH*6, top: 223, 
+        width: 17, height: 8 },
+
+      { left: this.groundEXP_WIDTH*7, top: 223, 
+        width: 17, height: 8 },
+		
+	  { left: this.groundEXP_WIDTH*8, top: 223, 
+        width: 17, height: 8 },
+		
+   ];
+	
+	
+	
+	
 	//Data...
 	
-	this.trokkieData =  {x: 150,  y: 90, speed:30};
+	this.groundEXPData =  { x: 50,  y: 110, velx:0 };
+
+  ;
+	
+	
+	
+	this.trokkieData =  {x: 150,  y: 90, speed:26};
 	
 	this.grootwielData = {x: 18, y:11, angle:0, radius:4.5, rotation_speed:0};
 	this.grootwielData.rotation_speed = ((1 / this.grootwielData.radius) * this.trokkieData.speed);
@@ -105,10 +149,10 @@ var Paratrooper = function () {
 	
 	//HIERIE VIER HANG AF VAN this.MOONGRAV!!
 	
-	charge_level: 2*this.CHARGE_FACTOR,
-	charge_rate: 100*this.CHARGE_FACTOR,
-	base_charge_level: 2*this.CHARGE_FACTOR,
-	max_charge_level: 100*this.CHARGE_FACTOR,
+	charge_level: 12*this.CHARGE_FACTOR,
+	charge_rate: 40*this.CHARGE_FACTOR,
+	base_charge_level: 12*this.CHARGE_FACTOR,
+	max_charge_level: 120*this.CHARGE_FACTOR,
 	
 	cooldown: 0,
 	max_cooldown: 100, // recharge points
@@ -116,20 +160,6 @@ var Paratrooper = function () {
 	
 	charging : false,
 	
-	/*  SONDER GAME SPEED
-	x: 9.5, 
-	y:6.5, 
-	width: 2.3, 
-	length:9,  
-	angle: Math.PI+0.5, 
-	color:'#5F5F5F',
-	charge_level: 0.5,
-	charge_rate: 0.02,
-	base_charge_level: 0.5,
-	max_charge_level: 2.5,
-	cooldown: 0,
-	max_cooldown: 100,
-	cooldown_recharge: 1,*/
 	};
 	
 	this.gageData = { 
@@ -174,6 +204,8 @@ var Paratrooper = function () {
 	this.turretSprite;
 	this.gageSprite;
 	
+	this.groundEXPSprite;
+	
 	this.bulletCount = 0;
 	this.bulletsSprites = [];
 	this.sprites = [];
@@ -188,8 +220,6 @@ var Paratrooper = function () {
 		if ((sprite.myData.charging == true)&&(sprite.myData.charge_level < sprite.myData.max_charge_level)){
 		 sprite.myData.charge_level += sprite.myData.charge_rate * ((now - lastAnimationFrameTime) / GAMESPEED);
 			
-		}else{
-		//sprite.myData.charge_level=sprite.myData.base_charge_level;
 		}
       }
    };
@@ -218,7 +248,19 @@ var Paratrooper = function () {
       }
    };
    
-   
+    this.groundEXPBehavior = {
+      execute: function (sprite, now, fps, context, 
+                         lastAnimationFrameTime) {
+		
+		
+		 if (sprite.artist.cellIndex == sprite.artist.cells.length-1)
+			sprite.visible = false;
+		
+		 
+		
+      }
+   };
+  
    //Artists
   
     this.gageArtist = {
@@ -227,9 +269,9 @@ var Paratrooper = function () {
          
         sprite.left = sprite.myData.x + sprite.myTrokkieData.x;
 		sprite.top = sprite.myData.y + sprite.myTrokkieData.y;
-		sprite.myData.middle = ((sprite.myTurretData.charge_level)/(sprite.myTurretData.max_charge_level)) * sprite.myData.length
+		sprite.myData.middle = ((sprite.myTurretData.charge_level-sprite.myTurretData.base_charge_level)/(sprite.myTurretData.max_charge_level-sprite.myTurretData.base_charge_level)) * sprite.myData.length
 		
-		console.log(sprite.myData.middle);
+		
 		
 		context.save();
 		
@@ -259,9 +301,9 @@ var Paratrooper = function () {
 		
 		
 		if (sprite.myTurretData.cooldown >= sprite.myTurretData.max_cooldown)
-		context.fillStyle = '#00FF00';
+		context.fillStyle = '#00aa00';
 		else
-		context.fillStyle = '#FF0000';
+		context.fillStyle = '#bb2222';
 		
 		context.fillRect(sprite.left+sprite.myData.length+1, sprite.top-5.5, 1, 1);
 		context.restore();
@@ -290,7 +332,7 @@ Paratrooper.prototype = {
     createSprites: function () {
       this.createTrokkieSprites(); 
       
-	 // this.positionAllSprites();
+	 
       this.addSpritesToSpriteArray();
     
 	},
@@ -302,6 +344,7 @@ Paratrooper.prototype = {
 	  this.sprites.push(this.gageSprite);
       this.sprites.push(this.grootwielSprite);
 	  this.sprites.push(this.kleinwielSprite);
+	  
     
 	
 
@@ -362,6 +405,30 @@ Paratrooper.prototype = {
 		this.gageSprite.myTrokkieData = this.trokkieData;
 		this.gageSprite.myTurretData = this.turretData;
       
+		
+	},
+	
+	
+	creategroundEXPSprite : function (bulletdata) {
+		
+		this.groundEXPSprite = new Sprite('EXP',
+                          new SpriteSheetArtist1(this.spritesheet, 
+                                                this.groundEXPCells),
+												
+												[ new CycleBehavior(70, 0), this.groundEXPBehavior ]
+												
+												);	
+		this.groundEXPSprite.width = this.groundEXPCells[0].width;
+		this.groundEXPSprite.height = this.groundEXPCells[0].height;
+		
+		this.groundEXPSprite.myData =  	this.groundEXPData;
+		
+		this.groundEXPSprite.myBulletData = bulletdata;
+		
+		this.groundEXPSprite.myData.x = this.groundEXPSprite.myBulletData.x- (17/2);
+		this.groundEXPSprite.myData.y = this.groundEXPSprite.myBulletData.y- (8/2);
+		
+		this.groundEXPSprite.myData.velx = -this.trokkieData.speed;
 	},
 	
 	
@@ -410,20 +477,14 @@ Paratrooper.prototype = {
          sprite = this.bulletsSprites[i];
 		 
 		 if (sprite.myData.y > 110){
-		
-		  
+			
 		  this.bulletsSprites[i].visible = false;	
-		  //console.log("hallo");
 		  
-		  
-		 
+	 
 		 }
-		 
 		 
 		} 
 
-		
-	
 	},
 	
 	
@@ -775,6 +836,12 @@ Paratrooper.prototype = {
 			this.chargeTurret();
 			} 
 			
+			if (Key.isDown(Key.c)){
+			
+			GAMESPEED = 2000; //-900 reverse!!!
+			}else
+			GAMESPEED = GAMESPEED_BASE;		
+			
 			
 			if (Key.isDown(Key.LEFT)) 
 			if (this.turretData.angle > (Math.PI))
@@ -800,6 +867,8 @@ var Key = {
   RIGHT: 39,
   DOWN: 40,
   a : 65,
+  c : 67,
+  
   
   isDown: function(keyCode) {
     return this._pressed[keyCode];

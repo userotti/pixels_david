@@ -6,25 +6,16 @@
 //        pauses for the specified interval before starting the whole
 //        process again.
 
-/*
-wielDraaiBehavior = function () {
-   
-};
 
-wielDraaiBehavior.prototype = {
-      execute: function (sprite, now, fps, context, 
-                         lastAnimationFrameTime) {
-         sprite.myData.angle += sprite.myData.rotation_speed * (now - lastAnimationFrameTime) / 1000;
-		 
-      }
-   };*/
 
 
 CycleBehavior = function (duration, interval) {
    this.duration = duration || 0;  //  milliseconds
    this.interval = interval || 0;
    this.lastAdvance = 0;
-};
+console.log(duration);
+console.log(interval);
+   };
 
 CycleBehavior.prototype = {
    execute: function (sprite, 
@@ -32,7 +23,10 @@ CycleBehavior.prototype = {
                          fps, 
                          context, 
                          lastAnimationFrameTime) {
-      if (this.lastAdvance === 0) {
+      
+	  console.log("hallo");
+	  
+	  if (this.lastAdvance === 0) {
          this.lastAdvance = now;
       }
 
