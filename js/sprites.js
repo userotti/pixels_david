@@ -64,11 +64,11 @@ turretArtist.prototype = {
 		context.rotate(sprite.myData.angle);
 		context.translate(-sprite.left, -sprite.top);
 		
-		
+		console.log("sprite.myData.cooldown: " + sprite.myData.cooldown);
 			context.beginPath();
 			context.lineWidth = sprite.myData.width;
 			context.moveTo(sprite.left,sprite.top);
-			context.lineTo(sprite.left+sprite.myData.length, sprite.top);
+			context.lineTo(sprite.left+(((sprite.myData.cooldown)/(sprite.myData.max_cooldown))*4)+5, sprite.top);
 			context.strokeStyle = sprite.myData.color;
 			context.stroke();
 		
@@ -86,19 +86,24 @@ turretArtist.prototype = {
 };
 
 
-SpriteSheetArtist1 = function (spritesheet, cells) {
+GroundEXPSheetArtist = function (spritesheet, cells) {
    this.cells = cells;
    this.spritesheet = spritesheet;
    this.cellIndex = 0;
 };
 
-SpriteSheetArtist1.prototype = {
+GroundEXPSheetArtist.prototype = {
    draw: function (sprite, context) {
       var cell = this.cells[this.cellIndex];
 	 
 	  
-	  sprite.left = sprite.myData.x; 
-	  sprite.top = sprite.myData.y;
+	  sprite.left = sprite.x; 
+	  sprite.top = sprite.y;
+	  
+	 // console.log(" sprite.left" +  sprite.left);
+	//  console.log(" sprite.x" + sprite.x);
+	  
+	  
 	 // console.log(cell.left + "," + cell.top + "," + cell.width + "," + cell.height + ","+ sprite.left + "," + sprite.top + "," + cell.width + "," + cell.height );
 
 	  //  console.clear();
@@ -111,7 +116,7 @@ SpriteSheetArtist1.prototype = {
    advance: function () {
       if (this.cellIndex === this.cells.length-1) {
          //this.cellIndex = 0;
-		 console.log("POES");
+		 
       }
       else {
          this.cellIndex++;
@@ -241,7 +246,7 @@ Sprite.prototype = {
       
 	  
 	  for (var i = 0; i < this.behaviors.length; ++i) {
-	  if (this.type ==  'EXP') console.log("jou!");
+	  
          this.behaviors[i].execute(this, 
                                    now, 
                                    fps, 

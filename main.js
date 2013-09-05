@@ -12,11 +12,17 @@ var Paratrooper = function () {
 	this.smallCanvasHeight = 120;
 	//this.GAMESPEED = 1000;
 	this.canvas_upscale = 4; //vier is beter
+	this.canvas_upscale_x = 4;
+	this.canvas_upscale_y = 4;
 	this.MAXBULLETS = 9;
 	this.MOONRAV = 40;
 	this.CHARGE_FACTOR = 1;
 	//this.MOONRAV = 0.02;
 	
+	
+	//Sound
+	this.turretShootSound = 0;
+	this.bulletHitGroundSound = 0;
 	//Canvas Creation..................
 	
 	this.klein_canvas = document.createElement( 'canvas' );
@@ -24,8 +30,8 @@ var Paratrooper = function () {
     this.klein_canvas.height = this.smallCanvasHeight;
 		
 	this.groot_canvas = document.createElement( 'canvas' );
-	this.groot_canvas.width = this.smallCanvasWidth * this.canvas_upscale;
-	this.groot_canvas.height = this.smallCanvasHeight * this.canvas_upscale;
+	this.groot_canvas.width = this.smallCanvasWidth * this.canvas_upscale_x;
+	this.groot_canvas.height = this.smallCanvasHeight * this.canvas_upscale_y;
 	this.groot_canvas.id = "game-canvas";
 	
 	this.ctx = this.klein_canvas.getContext( '2d' );
@@ -123,9 +129,7 @@ var Paratrooper = function () {
 	
 	//Data...
 	
-	this.groundEXPData =  { x: 50,  y: 110, velx:0 };
-
-  ;
+	
 	
 	
 	
@@ -149,14 +153,14 @@ var Paratrooper = function () {
 	
 	//HIERIE VIER HANG AF VAN this.MOONGRAV!!
 	
-	charge_level: 12*this.CHARGE_FACTOR,
+	charge_level: 20*this.CHARGE_FACTOR,
 	charge_rate: 40*this.CHARGE_FACTOR,
-	base_charge_level: 12*this.CHARGE_FACTOR,
+	base_charge_level: 20*this.CHARGE_FACTOR,
 	max_charge_level: 120*this.CHARGE_FACTOR,
 	
 	cooldown: 0,
 	max_cooldown: 100, // recharge points
-	cooldown_recharge: 100, //recharge points per second
+	cooldown_recharge: 80, //recharge points per second
 	
 	charging : false,
 	
@@ -181,20 +185,10 @@ var Paratrooper = function () {
 	
 	
 	
-	this.bulletData = [
+	this.bulletData = 	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, colour:'#887634'};
 	
-	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#887634'},
-	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#887454'},
-	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#896156'},
-	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#896145'},
-	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#887634'},
-	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#896156'},
-	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#887465'},
-	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#896156'},
-	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#887434'},
-	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, color:'#887654'},
 	
-	];
+	
 	
 	
 	
@@ -204,9 +198,9 @@ var Paratrooper = function () {
 	this.turretSprite;
 	this.gageSprite;
 	
-	this.groundEXPSprite;
+
 	
-	this.bulletCount = 0;
+	this.effects = [];
 	this.bulletsSprites = [];
 	this.sprites = [];
 	
@@ -214,8 +208,10 @@ var Paratrooper = function () {
 	this.turretBehavior = {
       execute: function (sprite, now, fps, context, 
                          lastAnimationFrameTime) {
-         if (sprite.myData.cooldown < sprite.myData.max_cooldown) 
+         if (sprite.myData.cooldown < sprite.myData.max_cooldown) {
 		sprite.myData.cooldown += sprite.myData.cooldown_recharge * ((now - lastAnimationFrameTime) / GAMESPEED);
+		}
+		else sprite.myData.cooldown = sprite.myData.max_cooldown;
 		
 		if ((sprite.myData.charging == true)&&(sprite.myData.charge_level < sprite.myData.max_charge_level)){
 		 sprite.myData.charge_level += sprite.myData.charge_rate * ((now - lastAnimationFrameTime) / GAMESPEED);
@@ -234,13 +230,13 @@ var Paratrooper = function () {
 	this.bulletBehavior = {
       execute: function (sprite, now, fps, context, 
                          lastAnimationFrameTime) {
-		sprite.myData.velx += sprite.myData.accx * ((now - lastAnimationFrameTime) / GAMESPEED);
-		sprite.myData.vely += sprite.myData.accy * ((now - lastAnimationFrameTime) / GAMESPEED);        
+		sprite.velx += sprite.accx * ((now - lastAnimationFrameTime) / GAMESPEED);
+		sprite.vely += sprite.accy * ((now - lastAnimationFrameTime) / GAMESPEED);        
 		
 		
 		
-	    sprite.myData.x += sprite.myData.velx * ((now - lastAnimationFrameTime) / GAMESPEED);
-		sprite.myData.y += sprite.myData.vely * ((now - lastAnimationFrameTime) / GAMESPEED);
+	    sprite.x += sprite.velx * ((now - lastAnimationFrameTime) / GAMESPEED);
+		sprite.y += sprite.vely * ((now - lastAnimationFrameTime) / GAMESPEED);
 		  
 		
 		  
@@ -252,9 +248,10 @@ var Paratrooper = function () {
       execute: function (sprite, now, fps, context, 
                          lastAnimationFrameTime) {
 		
+		sprite.x += sprite.velx * (now - lastAnimationFrameTime) / GAMESPEED;
 		
-		 if (sprite.artist.cellIndex == sprite.artist.cells.length-1)
-			sprite.visible = false;
+		/* if (sprite.artist.cellIndex == sprite.artist.cells.length-1)
+			sprite.visible = false;*/
 		
 		 
 		
@@ -316,11 +313,11 @@ var Paratrooper = function () {
       draw: function (sprite, context) {
         
          
-        sprite.left = sprite.myData.x;
-		sprite.top = sprite.myData.y;
+        sprite.left = sprite.x;
+		sprite.top = sprite.y;
 		
-		context.fillStyle = sprite.myData.color;
-		context.fillRect(sprite.left, sprite.top, sprite.myData.radius, sprite.myData.radius);
+		context.fillStyle = sprite.colour;
+		context.fillRect(sprite.left, sprite.top, sprite.radius, sprite.radius);
 		
       }
    };
@@ -397,7 +394,9 @@ Paratrooper.prototype = {
 		this.turretSprite = new Sprite('turret', new turretArtist(), [this.turretBehavior]);
 		
 		this.turretSprite.myData = this.turretData; 
+		this.turretSprite.myData.cooldown = 0;
 		this.turretSprite.myTrokkieData = this.trokkieData;   
+		
 
 		this.gageSprite = new Sprite('gage', this.gageArtist);
 		
@@ -408,28 +407,6 @@ Paratrooper.prototype = {
 		
 	},
 	
-	
-	creategroundEXPSprite : function (bulletdata) {
-		
-		this.groundEXPSprite = new Sprite('EXP',
-                          new SpriteSheetArtist1(this.spritesheet, 
-                                                this.groundEXPCells),
-												
-												[ new CycleBehavior(70, 0), this.groundEXPBehavior ]
-												
-												);	
-		this.groundEXPSprite.width = this.groundEXPCells[0].width;
-		this.groundEXPSprite.height = this.groundEXPCells[0].height;
-		
-		this.groundEXPSprite.myData =  	this.groundEXPData;
-		
-		this.groundEXPSprite.myBulletData = bulletdata;
-		
-		this.groundEXPSprite.myData.x = this.groundEXPSprite.myBulletData.x- (17/2);
-		this.groundEXPSprite.myData.y = this.groundEXPSprite.myBulletData.y- (8/2);
-		
-		this.groundEXPSprite.myData.velx = -this.trokkieData.speed;
-	},
 	
 	
 	
@@ -449,41 +426,77 @@ Paratrooper.prototype = {
 		bulletSprite = new Sprite('bullet',
 							  this.bulletArtist, [this.bulletBehavior]);	
 		 					  
-		bulletSprite.myData = this.bulletData[this.bulletCount];
+	
 		bulletSprite.myTurretData = this.turretData;
 		
-		bulletSprite.myData.power = this.turretData.charge_level;
-		bulletSprite.myData.accy = this.MOONRAV;
+		bulletSprite.power = this.turretData.charge_level;
+		bulletSprite.accy = this.MOONRAV;
+		bulletSprite.accx = 0;
+		
+		bulletSprite.radius = this.bulletData.radius;
+		bulletSprite.colour = this.bulletData.colour;
+		
+				
+		bulletSprite.x = this.trokkieData.x + bulletSprite.myTurretData.x + Math.cos(bulletSprite.myTurretData.angle)*bulletSprite.myTurretData.length;
+		bulletSprite.y = this.trokkieData.y + bulletSprite.myTurretData.y + Math.sin(bulletSprite.myTurretData.angle)*bulletSprite.myTurretData.length;
+		
+		bulletSprite.velx = Math.cos(bulletSprite.myTurretData.angle)*bulletSprite.power;
+		bulletSprite.vely = Math.sin(bulletSprite.myTurretData.angle)*bulletSprite.power;
+		
+		this.bulletsSprites.push(bulletSprite);
 		
 		
-		bulletSprite.myData.x = this.trokkieData.x + bulletSprite.myTurretData.x + Math.cos(bulletSprite.myTurretData.angle)*bulletSprite.myTurretData.length;
-		bulletSprite.myData.y = this.trokkieData.y + bulletSprite.myTurretData.y + Math.sin(bulletSprite.myTurretData.angle)*bulletSprite.myTurretData.length;
-		
-		bulletSprite.myData.velx = Math.cos(bulletSprite.myTurretData.angle)*bulletSprite.myData.power;
-		bulletSprite.myData.vely = Math.sin(bulletSprite.myTurretData.angle)*bulletSprite.myData.power;
-		
-		this.bulletsSprites.splice(this.bulletCount,1,bulletSprite);
 		
 		
 	
 	},
+	creategroundEXPSprite : function (bullet) {
+		
+		var groundEXPSprite; 
+		
+		groundEXPSprite = new Sprite('EXP',
+                          new GroundEXPSheetArtist(this.spritesheet, 
+                                                this.groundEXPCells),
+												
+												[ new CycleBehavior(60, 0), this.groundEXPBehavior ]
+												
+												);	
+		groundEXPSprite.width = this.groundEXPCells[0].width;
+		groundEXPSprite.height = this.groundEXPCells[0].height;
+		
+		groundEXPSprite.myBullet = bullet;
+		
+		groundEXPSprite.x = Math.floor(bullet.x) - (groundEXPSprite.width/2);
+		groundEXPSprite.y = Math.floor(bullet.y) - (groundEXPSprite.height/2);
+		
+		groundEXPSprite.velx = -this.rocks_vel;
+		
+		this.effects.push(groundEXPSprite);
+	},
+	
 	
 	
 	
 	bulletCollision : function(){
 	 var sprite;
-
+	 //var bulletToBeDeleted = [];
+	 
       for (var i=0; i < this.bulletsSprites.length; ++i) {
          sprite = this.bulletsSprites[i];
 		 
-		 if (sprite.myData.y > 110){
+		 if (sprite.y > 108){
+							
+			this.creategroundEXPSprite(this.bulletsSprites[i]);
+			this.bulletsSprites.splice(i,1);
+			this.bulletHitGroundSound.play();
 			
-		  this.bulletsSprites[i].visible = false;	
-		  
-	 
+			//console.log("deleted one: " + this.bulletsSprites.length);
+			
 		 }
 		 
 		} 
+		
+		
 
 	},
 	
@@ -494,33 +507,56 @@ Paratrooper.prototype = {
 		
 		
 		
-		
-		
-		
-		
-		
 	},
 		
 	shootBullet: function(){
 		
-		if (this.turretData.cooldown >= this.turretData.max_cooldown)
-			this.createBulletSprite();
+		if (this.turretData.cooldown >= this.turretData.max_cooldown){
 		
+			this.createBulletSprite();
+			this.turretData.cooldown = 0;
+			this.turretShootSound.play();
+		}
 		this.turretData.charge_level = this.turretData.base_charge_level;
-		this.turretData.cooldown = 0;
+		
 		this.turretData.charging = false;
 		
 	},
+	
 	isSpriteInView: function(sprite) {
       
 	  
-	 
-	  
 	  return sprite.left + sprite.width > sprite.hOffset &&
              sprite.left < sprite.hOffset + this.klein_canvas.width;
+			 
+			 
     },
 
-     
+    
+	updateEffectsSprites: function (now) {
+      var sprite;
+
+      for (var i=0; i < this.effects.length; ++i) {
+         sprite = this.effects[i];
+		//	console.log("this.isSpriteInView(sprite) : " + this.isSpriteInView(sprite));
+         if (sprite.visible && this.isSpriteInView(sprite)) {
+            sprite.update(now, 
+             this.fps, 
+             this.ctx,
+             this.lastAnimationFrameTime);
+			 
+         } else {
+		 
+			this.effects.splice(i,1);
+			console.log(this.effects.length);
+		 
+		 }
+		 
+		 
+      }
+    },
+
+	
 	updateBulletSprites: function (now) {
       var sprite;
 
@@ -532,11 +568,7 @@ Paratrooper.prototype = {
              this.fps, 
              this.ctx,
              this.lastAnimationFrameTime);
-         } else
-		 {
-			
-			
-		 }
+         } 
       }
     },
 	
@@ -562,6 +594,27 @@ Paratrooper.prototype = {
          sprite = this.bulletsSprites[i];
 				 
 		
+         if (sprite.visible && this.isSpriteInView(sprite)) {
+          
+			this.ctx.translate(-sprite.hOffset, 0);
+            
+			sprite.draw(this.ctx);
+			
+            this.ctx.translate(sprite.hOffset, 0);
+         } 
+		 
+
+		 
+      }
+    },
+	
+	drawEffects: function() {
+      var sprite;
+	
+	  for (var i=0; i < this.effects.length; ++i) {
+         sprite = this.effects[i];
+				 
+		// console.log("this.effects.length : " + sprite);
          if (sprite.visible && this.isSpriteInView(sprite)) {
           
 			this.ctx.translate(-sprite.hOffset, 0);
@@ -605,12 +658,14 @@ Paratrooper.prototype = {
 		this.drawBackground();
 		this.updateSprites(now);
         this.updateBulletSprites(now);
+		this.updateEffectsSprites(now);
 		this.bulletCollision();
 		
 		
 		
-		
+		this.drawEffects();
 		this.drawSprites();
+		
 		this.drawBullets();
 		this.drawForeground();
 		
@@ -626,6 +681,8 @@ Paratrooper.prototype = {
 	  this.setStartBackgroundOffset(now);
 	 	  
 	  this.small_draw(now);
+	  
+	  
 	  this.grootmaak();
 	},
    
@@ -753,12 +810,17 @@ Paratrooper.prototype = {
 				yi = yi + 1;
 			}
 			if ((this.old_imagedata.data[i] != this.imagedata.data[i]) || (this.timer == 1) ) {
-				x = xi*this.canvas_upscale; 
-				y = yi*this.canvas_upscale;
-					
-				this.ctx2.fillStyle  = "rgba("+ this.imagedata.data[i]+","+ this.imagedata.data[i+1]+","+this.imagedata.data[i+2]+",255)";
-				this.ctx2.fillRect(x,y,this.canvas_upscale,this.canvas_upscale);
 				
+				
+				x = xi;//*this.canvas_upscale; 
+				y = yi;//*this.canvas_upscale;
+				
+				this.ctx2.save();
+				this.ctx2.scale(this.canvas_upscale_x,this.canvas_upscale_y);
+				
+				this.ctx2.fillStyle  = "rgba("+ this.imagedata.data[i]+","+ this.imagedata.data[i+1]+","+this.imagedata.data[i+2]+",255)";
+				this.ctx2.fillRect(x,y,1,1);
+				this.ctx2.restore();
 			}
 			xi = xi + 1;
 					
@@ -809,8 +871,10 @@ Paratrooper.prototype = {
 	 
 	 
 	  this.spritesheet.src = 'images/spritesheet.png';
-
 	  
+	  this.turretShootSound = new Audio("nes-13-00.wav");
+	//  this.turretShootSound.setVolume(.01);	  // buffers automatically when created
+	  this.bulletHitGroundSound = new Audio("nes-00-00.wav");
 	
 	  
 	  

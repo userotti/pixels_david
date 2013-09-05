@@ -13,8 +13,7 @@ CycleBehavior = function (duration, interval) {
    this.duration = duration || 0;  //  milliseconds
    this.interval = interval || 0;
    this.lastAdvance = 0;
-console.log(duration);
-console.log(interval);
+
    };
 
 CycleBehavior.prototype = {
@@ -24,7 +23,7 @@ CycleBehavior.prototype = {
                          context, 
                          lastAnimationFrameTime) {
       
-	  console.log("hallo");
+	 
 	  
 	  if (this.lastAdvance === 0) {
          this.lastAdvance = now;
