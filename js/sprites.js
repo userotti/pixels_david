@@ -64,7 +64,7 @@ turretArtist.prototype = {
 		context.rotate(sprite.myData.angle);
 		context.translate(-sprite.left, -sprite.top);
 		
-		console.log("sprite.myData.cooldown: " + sprite.myData.cooldown);
+		//console.log("sprite.myData.cooldown: " + sprite.myData.cooldown);
 			context.beginPath();
 			context.lineWidth = sprite.myData.width;
 			context.moveTo(sprite.left,sprite.top);
@@ -80,10 +80,139 @@ turretArtist.prototype = {
                                           cell.width, cell.height,
                                           sprite.left, sprite.top,
                                           cell.width, cell.height);*/
-   },
+   }
 
   
 };
+
+
+BulletSheetArtist = function (spritesheet, cells) {
+   this.cells = cells;
+   this.spritesheet = spritesheet;
+   this.cellIndex = 0;
+};
+
+BulletSheetArtist.prototype = {
+   draw: function (sprite, context) {
+      var cell = this.cells[this.cellIndex];
+	 
+	  
+	sprite.left = sprite.x; 
+	sprite.top = sprite.y;
+
+	context.translate(sprite.left,sprite.top);
+	context.rotate(sprite.angle);
+	context.translate(-cell.width/2, -cell.height/8);
+	
+	
+	
+	
+	
+    context.drawImage(this.spritesheet, cell.left, cell.top,
+                                          cell.width, cell.height,
+                                          0, 0,
+                                          cell.width, cell.height);
+			  
+   },
+
+   advance: function () {
+      if (this.cellIndex === this.cells.length-1) {
+         this.cellIndex = 0;
+		 
+      }
+      else {
+         this.cellIndex++
+		
+      }
+   }
+};
+
+
+AlienPodBoosterSheetArtist = function (spritesheet, cells) {
+   this.cells = cells;
+   this.spritesheet = spritesheet;
+   this.cellIndex = 0;
+};
+
+AlienPodBoosterSheetArtist.prototype = {
+   draw: function (sprite, context) {
+      var cell = this.cells[this.cellIndex];
+	 
+	  
+	 /* console.log("cell.left" + cell.left);
+	  console.log("cell.top" + cell.top);
+      console.log("sprite.left" + sprite.left);
+	  console.log("sprite.top" + sprite.top);*/
+	
+      context.drawImage(this.spritesheet, cell.left, cell.top,
+                                          cell.width, cell.height,
+                                          0, 0,
+                                          cell.width, cell.height);
+								  
+   },
+
+   advance: function () {
+      if (this.cellIndex === this.cells.length-1) {
+         this.cellIndex = 0;
+		 
+      }
+      else {
+         this.cellIndex++
+		
+      }
+   }
+};
+
+
+AlienPodSheetArtist = function (spritesheet, cells) {
+   this.cells = cells;
+   this.spritesheet = spritesheet;
+   this.cellIndex = 0;
+};
+
+AlienPodSheetArtist.prototype = {
+   draw: function (sprite, context) {
+      var cell = this.cells[this.cellIndex];
+	 
+	  
+	  sprite.left = sprite.x; 
+	  sprite.top = sprite.y;
+//	console.log(sprite.left);
+	
+//	console.log("halllooo");
+	//console.log(" sprite.booster_flame.left"  +  sprite.booster_flame.left);
+	 sprite.booster_flame.left = sprite.x; 
+	 sprite.booster_flame.top = sprite.y; 
+	 
+	context.save();
+	context.translate(sprite.left,sprite.top);
+	
+	 
+		
+	
+    context.drawImage(this.spritesheet, cell.left, cell.top,
+                                          cell.width, cell.height,
+                                          0, 0,
+                                          cell.width, cell.height);
+	context.translate(5,12);	 
+	sprite.booster_flame.draw(context);
+	context.restore();	
+	
+					  
+   },
+
+   advance: function () {
+      if (this.cellIndex === this.cells.length-1) {
+         this.cellIndex = 0;
+		 
+      }
+      else {
+         this.cellIndex++
+		
+      }
+   }
+};
+
 
 
 GroundEXPSheetArtist = function (spritesheet, cells) {
@@ -119,7 +248,8 @@ GroundEXPSheetArtist.prototype = {
 		 
       }
       else {
-         this.cellIndex++;
+         this.cellIndex++
+		// console.log("this.cellIndex: " + ((now - lastAnimationFrameTime) /(0.011111* GAMESPEED)));
       }
    }
 };
@@ -191,7 +321,7 @@ var Sprite = function (type, artist, behaviors) {
       left: 0,
       right: 0,
       top: 0,
-      bottom: 0,
+      bottom: 0
    };
 };
 
@@ -204,7 +334,7 @@ Sprite.prototype = {
          right:  this.left - this.hOffset + this.width - this.collisionMargin.right,
          top:    this.top + this.collisionMargin.top,
          bottom: this.top + this.collisionMargin.top + 
-                 this.height - this.collisionMargin.bottom,
+                 this.height - this.collisionMargin.bottom
       }
    },
 
@@ -233,6 +363,8 @@ Sprite.prototype = {
       
       if (this.visible && this.artist) {
          this.artist.draw(this, context);
+		// if (this.type == "AlienPodBooster")
+		 //console.log("Ek word gedraw");
       }
  
       if (this.showCollisionRectangle) {
@@ -253,5 +385,5 @@ Sprite.prototype = {
                                    context, 
                                    lastAnimationFrameTime);
       }
-   },
+   }
 };

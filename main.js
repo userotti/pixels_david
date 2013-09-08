@@ -125,12 +125,85 @@ var Paratrooper = function () {
    ];
 	
 	
+	this.AlienPod_WIDTH = 14;
+	this.AlienPod_HEIGHT = 13;
 	
+	this.AlienPodCells = [
+      { left: 0, top: 231, 
+        width: 14, height: 13},
+
+      { left: this.AlienPod_WIDTH, top: 231, 
+        width: this.AlienPod_WIDTH, height: this.AlienPod_HEIGHT },
+
+      { left: this.AlienPod_WIDTH*2, top: 231, 
+        width: this.AlienPod_WIDTH, height: this.AlienPod_HEIGHT },
+
+      { left: this.AlienPod_WIDTH*3, top: 231, 
+        width: this.AlienPod_WIDTH, height: this.AlienPod_HEIGHT },
+	
+      { left: this.AlienPod_WIDTH*4, top: 231, 
+        width: this.AlienPod_WIDTH, height: this.AlienPod_HEIGHT},
+
+      { left: this.AlienPod_WIDTH*5, top: 231, 
+        width: this.AlienPod_WIDTH, height: this.AlienPod_HEIGHT },
+
+      { left: this.AlienPod_WIDTH*6, top: 231, 
+        width: this.AlienPod_WIDTH, height: this.AlienPod_HEIGHT },
+
+      { left: this.AlienPod_WIDTH*7, top: 231, 
+        width: this.AlienPod_WIDTH, height: this.AlienPod_HEIGHT },
+		
+	  
+		
+   ];
+   
+   
+   this.AlienPodBoosterCells = [
+      { left: 0, top: 244, 
+        width: 4, height: 4},
+
+      { left: 4, top: 244, 
+        width: 4, height:4 },
+
+      { left: 8, top: 244, 
+        width: 4, height: 4},
+
+      { left: 12, top: 244, 
+        width: 4, height: 4 },
+	
+      { left: 16, top: 244, 
+        width:4, height: 4},
+
+      { left: 20, top: 244, 
+        width: 4, height: 4 },
+
+      { left: 24, top: 244, 
+        width: 4, height: 4 },
+
+      { left: 28, top: 244, 
+        width: 4, height: 4 },
+		
+	  { left: 32, top: 244, 
+        width: 4, height: 4 },
+	
+      { left: 36, top: 244, 
+        width: 4, height: 4},
+
+       
+		
+   ];
+	
+	this.BulletCells = [
+      { left: 0, top: 248, 
+        width: 3, height: 4},
+      
+		
+   ];
 	
 	//Data...
 	
 	
-	
+	this.alienPodData =  {x: 150,  y: 90, speed:26};
 	
 	
 	this.trokkieData =  {x: 150,  y: 90, speed:26};
@@ -160,11 +233,9 @@ var Paratrooper = function () {
 	
 	cooldown: 0,
 	max_cooldown: 100, // recharge points
-	cooldown_recharge: 80, //recharge points per second
+	cooldown_recharge: 140, //recharge points per second
 	
-	charging : false,
-	
-	};
+	charging : false	};
 	
 	this.gageData = { 
 	
@@ -177,7 +248,7 @@ var Paratrooper = function () {
 	
 	color1:'#605743', //32,23,19
 	color2:'#201713', //32,23,19
-	color3:'#ff3411',
+	color3:'#ff3411'
 	
 	
 	
@@ -202,6 +273,7 @@ var Paratrooper = function () {
 	
 	this.effects = [];
 	this.bulletsSprites = [];
+	this.targetSprites = [];
 	this.sprites = [];
 	
 	
@@ -238,8 +310,18 @@ var Paratrooper = function () {
 	    sprite.x += sprite.velx * ((now - lastAnimationFrameTime) / GAMESPEED);
 		sprite.y += sprite.vely * ((now - lastAnimationFrameTime) / GAMESPEED);
 		  
+		if (sprite.velx < 0)
+		sprite.angle = (Math.atan(sprite.vely/sprite.velx))-Math.PI/2;
+		else
+		sprite.angle = (Math.atan(sprite.vely/sprite.velx))-(Math.PI/2)+(Math.PI);
+		//else
+		//sprite.angle = (Math.atan(sprite.vely/sprite.velx))-Math.PI/2;
 		
-		  
+		
+		
+		
+		
+		//console.log("angle in behav" + sprite.angle );
 		
       }
    };
@@ -248,12 +330,48 @@ var Paratrooper = function () {
       execute: function (sprite, now, fps, context, 
                          lastAnimationFrameTime) {
 		
-		sprite.x += sprite.velx * (now - lastAnimationFrameTime) / GAMESPEED;
+		sprite.x += Math.floor(sprite.velx) * (now - lastAnimationFrameTime) / GAMESPEED;
 		
 		/* if (sprite.artist.cellIndex == sprite.artist.cells.length-1)
 			sprite.visible = false;*/
 		
 		 
+		
+      }
+   };
+   
+   this.alienPodBehavior = {
+      execute: function (sprite, now, fps, context, 
+                         lastAnimationFrameTime) {
+		
+		
+		
+		
+		if (sprite.y < 40){
+			sprite.booster_flame.visible = false;
+			sprite.vely += sprite.accy * (now - lastAnimationFrameTime) / GAMESPEED;
+			sprite.booster_flame.artist.cellIndex = 0;
+			
+		}
+		else
+		{
+			sprite.vely += sprite.boost_accy * (now - lastAnimationFrameTime) / GAMESPEED;
+			
+			sprite.booster_flame.visible = true;
+			
+		}
+		
+		sprite.x += (sprite.velx) * (now - lastAnimationFrameTime) / GAMESPEED;
+		sprite.y += (sprite.vely) * (now - lastAnimationFrameTime) / GAMESPEED;
+		/* if (sprite.artist.cellIndex == sprite.artist.cells.length-1)
+			sprite.visible = false;*/
+		
+		sprite.booster_flame.update(now, 
+             fps, 
+             context,
+             lastAnimationFrameTime);
+			 
+		//console.log(sprite.booster_flame.draw);	 
 		
       }
    };
@@ -308,7 +426,7 @@ var Paratrooper = function () {
       }
    };
 	
-	
+	/*
 	this.bulletArtist = {
       draw: function (sprite, context) {
         
@@ -322,13 +440,15 @@ var Paratrooper = function () {
       }
    };
    
+   */
+   
 };
   
 
 Paratrooper.prototype = {
     createSprites: function () {
       this.createTrokkieSprites(); 
-      
+      this.createAlienPodSprite(-14,45);
 	 
       this.addSpritesToSpriteArray();
     
@@ -342,8 +462,7 @@ Paratrooper.prototype = {
       this.sprites.push(this.grootwielSprite);
 	  this.sprites.push(this.kleinwielSprite);
 	  
-    
-	
+	  
 
 	
     },
@@ -422,9 +541,9 @@ Paratrooper.prototype = {
 	
 		}
 		
-		//THIS IS WRONG!!!!
+		
 		bulletSprite = new Sprite('bullet',
-							  this.bulletArtist, [this.bulletBehavior]);	
+							  new BulletSheetArtist(this.spritesheet, this.BulletCells), [this.bulletBehavior]);	
 		 					  
 	
 		bulletSprite.myTurretData = this.turretData;
@@ -434,7 +553,13 @@ Paratrooper.prototype = {
 		bulletSprite.accx = 0;
 		
 		bulletSprite.radius = this.bulletData.radius;
-		bulletSprite.colour = this.bulletData.colour;
+		//bulletSprite.colour = this.bulletData.colour;
+		
+		bulletSprite.angle = 0;
+		bulletSprite.rotation_speed = (Math.random()*10)+4;
+		
+		console.log("angle: " + bulletSprite.angel);
+		console.log("bulletSprite.rotation_speed: " + bulletSprite.rotation_speed);
 		
 				
 		bulletSprite.x = this.trokkieData.x + bulletSprite.myTurretData.x + Math.cos(bulletSprite.myTurretData.angle)*bulletSprite.myTurretData.length;
@@ -450,6 +575,52 @@ Paratrooper.prototype = {
 		
 	
 	},
+	
+	
+	//this.targetSprites
+	
+	
+	createAlienPodSprite : function (px,py) {
+		
+		var AlienPodSprite; 
+		
+		AlienPodSprite = new Sprite('AlienPod',
+                          new AlienPodSheetArtist(this.spritesheet, 
+                                                this.AlienPodCells),
+												
+												[ new CycleBehavior(300, 0), this.alienPodBehavior ]
+												
+												);	
+												
+												
+		AlienPodSprite.booster_flame = 	new Sprite('AlienPodBooster',
+                          new AlienPodBoosterSheetArtist(this.spritesheet, 
+                                                this.AlienPodBoosterCells),
+												
+												[ new CycleBehavior(50, 0)]
+												
+												);										
+												
+		AlienPodSprite.width = this.AlienPodCells[0].width;
+		AlienPodSprite.height = this.AlienPodCells[0].height;
+		
+		AlienPodSprite.x = px;
+		AlienPodSprite.y = py;
+		AlienPodSprite.velx = 10;
+		AlienPodSprite.vely = 0;
+		AlienPodSprite.accy = 2;
+		
+		AlienPodSprite.boost_accy = -5;
+		//console.log(AlienPodSprite);
+		
+		
+		this.targetSprites.push(AlienPodSprite);
+		//this.effects.push(AlienPodSprite.booster_flame);
+		
+	},
+	
+	
+	
 	creategroundEXPSprite : function (bullet) {
 		
 		var groundEXPSprite; 
@@ -548,7 +719,7 @@ Paratrooper.prototype = {
          } else {
 		 
 			this.effects.splice(i,1);
-			console.log(this.effects.length);
+			
 		 
 		 }
 		 
@@ -572,6 +743,24 @@ Paratrooper.prototype = {
       }
     },
 	
+	
+	updateTargetSprites: function (now) {
+      var sprite;
+	//console.log(this.targetSprites.length);
+      for (var i=0; i < this.targetSprites.length; ++i) {
+         sprite = this.targetSprites[i];
+			
+         if (sprite.visible && this.isSpriteInView(sprite)) {
+           
+			sprite.update(now, 
+             this.fps, 
+             this.ctx,
+             this.lastAnimationFrameTime);
+         } 
+      }
+    },
+	
+	
 	updateSprites: function (now) {
       var sprite;
 
@@ -586,6 +775,31 @@ Paratrooper.prototype = {
          }
       }
     },
+	
+	
+	
+	drawTargets: function() {
+      var sprite;
+	
+	  for (var i=0; i < this.targetSprites.length; ++i) {
+         sprite = this.targetSprites[i];
+				 
+		
+         if (sprite.visible && this.isSpriteInView(sprite)) {
+          
+			this.ctx.translate(-sprite.hOffset, 0);
+            
+			sprite.draw(this.ctx);
+			
+            this.ctx.translate(sprite.hOffset, 0);
+         } 
+		 
+
+		 
+      }
+    },
+	
+	
 	
 	drawBullets: function() {
       var sprite;
@@ -655,18 +869,20 @@ Paratrooper.prototype = {
 	small_draw: function(now){
 		
 				
-		this.drawBackground();
+		
 		this.updateSprites(now);
         this.updateBulletSprites(now);
 		this.updateEffectsSprites(now);
+		this.updateTargetSprites(now);
 		this.bulletCollision();
 		
 		
-		
+		this.drawBackground();
 		this.drawEffects();
 		this.drawSprites();
-		
 		this.drawBullets();
+		this.drawTargets();
+		
 		this.drawForeground();
 		
 	
@@ -902,7 +1118,7 @@ Paratrooper.prototype = {
 			
 			if (Key.isDown(Key.c)){
 			
-			GAMESPEED = 2000; //-900 reverse!!!
+			GAMESPEED = 1800; //-900 reverse!!!
 			}else
 			GAMESPEED = GAMESPEED_BASE;		
 			
@@ -917,7 +1133,7 @@ Paratrooper.prototype = {
 				this.turretData.angle = this.turretData.angle + 0.04;
 					  
 											
-		},   
+		}  
 };
 // daai anner bra se se shit.....http://nokarma.org/2011/02/27/javascript-game-development-keyboard-input/index.html
 
@@ -966,11 +1182,13 @@ var Key = {
 		
 	
 	}
+	
 	window.onkeydown = function (e) {
 	   var key = e.keyCode;
-
-	   if (key === 68 || key === 37) { // 'd' or left arrow
-		 
+	
+	   if (key === 68) { // 'd' or left arrow
+		// console.log("drukhom");
+		paratrooper.createAlienPodSprite(-14,45);
 		 
 		  
 	   }
