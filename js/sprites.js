@@ -96,18 +96,13 @@ BulletSheetArtist.prototype = {
    draw: function (sprite, context) {
       var cell = this.cells[this.cellIndex];
 	 
-	  
 	sprite.left = sprite.x; 
 	sprite.top = sprite.y;
 
 	context.translate(sprite.left,sprite.top);
 	context.rotate(sprite.angle);
 	context.translate(-cell.width/2, -cell.height/8);
-	
-	
-	
-	
-	
+		
     context.drawImage(this.spritesheet, cell.left, cell.top,
                                           cell.width, cell.height,
                                           0, 0,
@@ -137,13 +132,7 @@ AlienPodBoosterSheetArtist = function (spritesheet, cells) {
 AlienPodBoosterSheetArtist.prototype = {
    draw: function (sprite, context) {
       var cell = this.cells[this.cellIndex];
-	 
-	  
-	 /* console.log("cell.left" + cell.left);
-	  console.log("cell.top" + cell.top);
-      console.log("sprite.left" + sprite.left);
-	  console.log("sprite.top" + sprite.top);*/
-	
+		
       context.drawImage(this.spritesheet, cell.left, cell.top,
                                           cell.width, cell.height,
                                           0, 0,
@@ -175,21 +164,15 @@ AlienPodSheetArtist.prototype = {
       var cell = this.cells[this.cellIndex];
 	 
 	  
-	  sprite.left = sprite.x; 
-	  sprite.top = sprite.y;
-//	console.log(sprite.left);
-	
-//	console.log("halllooo");
-	//console.log(" sprite.booster_flame.left"  +  sprite.booster_flame.left);
-	 sprite.booster_flame.left = sprite.x; 
-	 sprite.booster_flame.top = sprite.y; 
+	sprite.left = sprite.x; 
+	sprite.top = sprite.y;
+
+	sprite.booster_flame.left = sprite.x; 
+	sprite.booster_flame.top = sprite.y; 
 	 
 	context.save();
 	context.translate(sprite.left,sprite.top);
-	
-	 
-		
-	
+
     context.drawImage(this.spritesheet, cell.left, cell.top,
                                           cell.width, cell.height,
                                           0, 0,
@@ -197,23 +180,18 @@ AlienPodSheetArtist.prototype = {
 	context.translate(5,12);	 
 	sprite.booster_flame.draw(context);
 	context.restore();	
-	
-					  
+				  
    },
 
    advance: function () {
       if (this.cellIndex === this.cells.length-1) {
          this.cellIndex = 0;
-		 
-      }
+	  }
       else {
          this.cellIndex++
-		
       }
    }
 };
-
-
 
 GroundEXPSheetArtist = function (spritesheet, cells) {
    this.cells = cells;
@@ -224,18 +202,9 @@ GroundEXPSheetArtist = function (spritesheet, cells) {
 GroundEXPSheetArtist.prototype = {
    draw: function (sprite, context) {
       var cell = this.cells[this.cellIndex];
-	 
-	  
+  
 	  sprite.left = sprite.x; 
 	  sprite.top = sprite.y;
-	  
-	 // console.log(" sprite.left" +  sprite.left);
-	//  console.log(" sprite.x" + sprite.x);
-	  
-	  
-	 // console.log(cell.left + "," + cell.top + "," + cell.width + "," + cell.height + ","+ sprite.left + "," + sprite.top + "," + cell.width + "," + cell.height );
-
-	  //  console.clear();
       context.drawImage(this.spritesheet, cell.left, cell.top,
                                           cell.width, cell.height,
                                           sprite.left, sprite.top,
@@ -245,15 +214,12 @@ GroundEXPSheetArtist.prototype = {
    advance: function () {
       if (this.cellIndex === this.cells.length-1) {
          //this.cellIndex = 0;
-		 
       }
       else {
          this.cellIndex++
-		// console.log("this.cellIndex: " + ((now - lastAnimationFrameTime) /(0.011111* GAMESPEED)));
-      }
+		
    }
 };
-
 
 
 SpriteSheetArtist = function (spritesheet, cells) {
@@ -266,12 +232,9 @@ SpriteSheetArtist.prototype = {
    draw: function (sprite, context) {
       var cell = this.cells[this.cellIndex];
 	 
-	  
 	  sprite.left = sprite.myData.x; 
 	  sprite.top = sprite.myData.y;
-	 // console.log(cell.left + "," + cell.top + "," + cell.width + "," + cell.height + ","+ sprite.left + "," + sprite.top + "," + cell.width + "," + cell.height );
 
-	  //  console.clear();
       context.drawImage(this.spritesheet, cell.left, cell.top,
                                           cell.width, cell.height,
                                           sprite.left, sprite.top,
