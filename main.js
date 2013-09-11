@@ -163,6 +163,18 @@ var Moonrun = function () {
 		
    ];
    
+    this.AlienPodPartRoofCells = [{ left: this.AlienPod_WIDTH*8, top: 231, 
+        width: this.AlienPod_WIDTH, height: this.AlienPod_HEIGHT },
+	];	
+
+	this.AlienPodPartLeftCells = [{ left: this.AlienPod_WIDTH*9, top: 231, 
+        width: this.AlienPod_WIDTH, height: this.AlienPod_HEIGHT },
+	];
+
+	this.AlienPodPartRightCells = [{ left: this.AlienPod_WIDTH*10, top: 231, 
+        width: this.AlienPod_WIDTH, height: this.AlienPod_HEIGHT },
+	];	
+   
    
    this.AlienPodBoosterCells = [
       { left: 0, top: 244, 
@@ -437,7 +449,7 @@ var Moonrun = function () {
       execute: function (sprite, now, fps, context, 
                          lastAnimationFrameTime) {
 	  
-		console.log("behaving");
+		
 		
 		sprite.velx = sprite.myRocksVel; 
 		
@@ -479,7 +491,28 @@ var Moonrun = function () {
 				 
       }
    };
+   
+   this.alienPodPartBehavior = {
+      execute: function (sprite, now, fps, context, 
+                         lastAnimationFrameTime) {
+		sprite.velx += sprite.accx * ((now - lastAnimationFrameTime) / GAMESPEED);
+		sprite.vely += sprite.accy * ((now - lastAnimationFrameTime) / GAMESPEED);        
+		sprite.x += sprite.velx * ((now - lastAnimationFrameTime) / GAMESPEED);
+		sprite.y += sprite.vely * ((now - lastAnimationFrameTime) / GAMESPEED);
+		  
+	//	
+		sprite.angle += sprite.rotation_speed * ((now - lastAnimationFrameTime) / GAMESPEED);;
+		
+		sprite.left = sprite.x; 
+		sprite.top = sprite.y;
+		
+		//console.log("sprite.top behave" + sprite.top);
+		
+      }
+    };
    //Artists
+	
+  
   
     this.gageArtist = {
       draw: function (sprite, context) {
@@ -651,7 +684,7 @@ Moonrun.prototype = {
 		this.targetSprites.push(AlienPodSprite);
 	},
 
-	creategroundEXPSprite : function (bullet) {
+	creategroundEXPSprite : function (dropping_sprite) {
 		
 		var groundEXPSprite; 
 		groundEXPSprite = new Sprite('EXP',
@@ -661,12 +694,71 @@ Moonrun.prototype = {
 												);	
 		groundEXPSprite.width = this.groundEXPCells[0].width;
 		groundEXPSprite.height = this.groundEXPCells[0].height;
-		groundEXPSprite.myBullet = bullet;
-		groundEXPSprite.x = Math.floor(bullet.x) - (groundEXPSprite.width/2);
-		groundEXPSprite.y = Math.floor(bullet.y) - (groundEXPSprite.height/2);
+		groundEXPSprite.myBullet = dropping_sprite;
+		
+		if (dropping_sprite.type == "alienpodpart"){
+			console.log("dropping_sprite.special_mid_x" + dropping_sprite.special_mid_x);
+			groundEXPSprite.x = Math.floor(dropping_sprite.x + dropping_sprite.special_mid_x) - (groundEXPSprite.width/2);
+			groundEXPSprite.y = Math.floor(dropping_sprite.y + dropping_sprite.special_mid_y) - (groundEXPSprite.height/2);
+		
+		
+		}else{
+			
+		    groundEXPSprite.x = Math.floor(dropping_sprite.x) - (groundEXPSprite.width/2);
+			groundEXPSprite.y = Math.floor(dropping_sprite.y) - (groundEXPSprite.height/2);
+		}
+		
+		
 		groundEXPSprite.myRocksVel = -this.rocks_vel;
 		
 		this.effects.push(groundEXPSprite);
+	},
+	
+	
+	createalienPodPartSprite : function (target, cells, parttype) {
+		
+		var alienPodPartSprite; 
+		alienPodPartSprite = new Sprite('alienpodpart',
+                          new AlienPodPartSheetArtist(this.spritesheet, cells),
+												[this.alienPodPartBehavior ]);	
+												
+		alienPodPartSprite.width = this.AlienPodCells[0].width;
+		alienPodPartSprite.height = this.AlienPodCells[0].height;
+		
+			
+		alienPodPartSprite.x = (target.x);
+		alienPodPartSprite.y = (target.y);
+		
+		
+		if (parttype == "roof"){
+		alienPodPartSprite.velx = Math.random()*10 - Math.random()*10;
+		alienPodPartSprite.vely =  -(Math.random()*30 + 20);
+		alienPodPartSprite.special_mid_x = 6.5;
+		alienPodPartSprite.special_mid_y = 4.5;
+		}
+		
+		if (parttype == "left"){
+		alienPodPartSprite.velx = -(Math.random()*20 + 15);
+		alienPodPartSprite.vely = -(Math.random()*5 + 5);
+		alienPodPartSprite.special_mid_x = 3.5;
+		alienPodPartSprite.special_mid_y = 9.5;
+		}
+		
+		if (parttype == "right"){
+		alienPodPartSprite.velx = Math.random()*20 + 15;
+		alienPodPartSprite.vely = -(Math.random()*5 + 5)
+		alienPodPartSprite.special_mid_x = 9.5;
+		alienPodPartSprite.special_mid_y = 9.5;
+		}
+		
+		alienPodPartSprite.myPartType = parttype;
+		alienPodPartSprite.accx = 0;
+		alienPodPartSprite.accy = this.MOONRAV;
+		alienPodPartSprite.rotation_speed = Math.random()*7 - Math.random()*7;
+		alienPodPartSprite.angle = 0;
+		
+		
+		this.effects.push(alienPodPartSprite);
 	},
 	
 	
@@ -676,14 +768,16 @@ Moonrun.prototype = {
 		grootExplotionSprite = new Sprite('grootExplosion',
                           new GrootExplotionSheetArtist(this.spritesheet, 
                                                 this.grootExplosionCells),
-												[ new CycleBehavior(40, 0), this.grootExplosionBehavior ]
+												[ new CycleBehavior(60, 0), this.grootExplosionBehavior ]
 												);	
 		grootExplotionSprite.width = this.grootExplosionCells[0].width;
 		grootExplotionSprite.height = this.grootExplosionCells[0].height;
 		grootExplotionSprite.myTarget = target;
+		
+	
 		grootExplotionSprite.x = Math.floor(target.x) - (grootExplotionSprite.width/2) + (7);
 		grootExplotionSprite.y = Math.floor(target.y) - (grootExplotionSprite.height/2) + (9);
-		grootExplotionSprite.myRocksVel = -this.rocks_vel;
+		grootExplotionSprite.myRocksVel = -this.rocks_vel/2;
 		
 		console.log(grootExplotionSprite);
 		
@@ -696,33 +790,45 @@ Moonrun.prototype = {
 	  var Tsprite;
       for (var i=0; i < this.bulletsSprites.length; ++i) {
          Bsprite = this.bulletsSprites[i];
-		 if (Bsprite.y > this.level.floor){
+		 
+		
+
+		if (Bsprite.x < 0){
+		
+			this.bulletsSprites.splice(i,1);
+			
+		}else
+		
+		if (Bsprite.y > this.level.floor){
 							
 			
 			this.creategroundEXPSprite(Bsprite);
-			//this.creategrootExplosionSprite(this.bulletsSprites[i]);
-	
+			
 			this.bulletsSprites.splice(i,1);
 			this.bulletHitGroundSound.play();
-		 }
+		}else
+			
 			for (var j=0; j < this.targetSprites.length; ++j) {
-			 Tsprite = this.targetSprites[j]; 
+				Tsprite = this.targetSprites[j]; 
+						
+				if (Tsprite.type == "AlienPod"){
 				
-				/*	return NOT (
-		(Rect1.Bottom < Rect2.Top) OR
-		(Rect1.Top > Rect2.Bottom) OR
-		(Rect1.Left > Rect2.Right) OR
-		(Rect1.Right < Rect2.Left) )*/
-				
-				if (!((Tsprite.y + Tsprite.height < Bsprite.y) || (Tsprite.y > Bsprite.y) || (Tsprite.x > Bsprite.x) || (Tsprite.x + Tsprite.width < Bsprite.x))){
-				
-				
-					this.creategrootExplosionSprite(Tsprite);
-					this.bulletsSprites.splice(i,1);
-					this.targetSprites.splice(j,1);
-					this.AlienExplodesSound.play();
+					if (!((Tsprite.y + Tsprite.height < Bsprite.y) || (Tsprite.y+6 > Bsprite.y) || (Tsprite.x+2 > Bsprite.x) || (Tsprite.x + Tsprite.width - 2 < Bsprite.x))){
+					
+						
+						
+						this.createalienPodPartSprite(Tsprite,this.AlienPodPartRoofCells, "roof");
+						this.createalienPodPartSprite(Tsprite,this.AlienPodPartLeftCells, "left");
+						this.createalienPodPartSprite(Tsprite,this.AlienPodPartRightCells, "right");
+						
+						this.creategrootExplosionSprite(Tsprite);
+						
+						
+						this.bulletsSprites.splice(i,1);
+						this.targetSprites.splice(j,1);
+						this.AlienExplodesSound.play();
+					}
 				}
-				
 				
 			
 			
@@ -759,17 +865,32 @@ Moonrun.prototype = {
       for (var i=0; i < this.effects.length; ++i) {
          sprite = this.effects[i];
 		
+		
+		 if (sprite.type == "alienpodpart"){
+				
+				if (sprite.y + sprite.special_mid_y > this.level.floor){
+				sprite.visible = false;
+				this.creategroundEXPSprite(sprite);
+				this.bulletHitGroundSound.play();
+				}
+			};
+
+		
          if (sprite.visible && this.isSpriteInView(sprite)) {
-            sprite.update(now, 
+       	   sprite.update(now, 
              this.fps, 
              this.ctx,
              this.lastAnimationFrameTime);
-	      } else 
+		  
+		  } else 
 			this.effects.splice(i,1);
 	     
 		}
     },
-
+	
+	
+	
+	
 	
 	updateBulletSprites: function (now) {
       var sprite;
@@ -862,12 +983,16 @@ Moonrun.prototype = {
     },
 	
 	small_draw: function(now){
+		
+		
+		this.bulletCollision();
+		
 		this.updateSprites(now);
         this.updateBulletSprites(now);
 		this.updateEffectsSprites(now);
 		this.updateTargetSprites(now);
 		
-		this.bulletCollision();
+		
 	
 		this.drawBackground();
 		this.drawEffects();
@@ -1074,7 +1199,7 @@ Moonrun.prototype = {
 			
 			if (Key.isDown(Key.c)){
 			
-			GAMESPEED = 20800; //-900 reverse!!!
+			GAMESPEED = 30800; //-900 reverse!!!
 			}else
 			GAMESPEED = GAMESPEED_BASE;		
 			

@@ -118,6 +118,47 @@ BulletSheetArtist.prototype = {
    }
 };
 
+AlienPodPartSheetArtist = function (spritesheet, cells) {
+   this.cells = cells;
+   this.spritesheet = spritesheet;
+   this.cellIndex = 0;
+};
+
+
+AlienPodPartSheetArtist.prototype = {
+   draw: function (sprite, context) {
+      var cell = this.cells[this.cellIndex];
+	 
+	
+		context.translate(sprite.special_mid_x,sprite.special_mid_y);
+	
+		
+	
+	context.translate(sprite.left,sprite.top);
+	context.rotate(sprite.angle);
+	context.translate(-sprite.special_mid_x,-sprite.special_mid_y);
+	
+			
+			
+    context.drawImage(this.spritesheet, cell.left, cell.top,
+                                          cell.width, cell.height,
+                                          0, 0,
+                                          cell.width, cell.height);
+			  
+   },
+
+   advance: function () {
+      if (this.cellIndex === this.cells.length-1) {
+         this.cellIndex = 0;
+		 
+      }
+      else {
+         this.cellIndex++
+		
+      }
+   }
+};
+
 
 AlienPodBoosterSheetArtist = function (spritesheet, cells) {
    this.cells = cells;
