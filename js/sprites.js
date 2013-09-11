@@ -15,10 +15,7 @@ wielArtist.prototype = {
 	// console.log("artist" + this.wielData.x);
 	 
 	
-	 sprite.left = sprite.myData.x + sprite.myTrokkieData.x;
-	 sprite.top = sprite.myData.y + sprite.myTrokkieData.y;
-	 
-	 
+	
 	 
 	 context.save(); 
 	 
@@ -96,8 +93,7 @@ BulletSheetArtist.prototype = {
    draw: function (sprite, context) {
       var cell = this.cells[this.cellIndex];
 	 
-	sprite.left = sprite.x; 
-	sprite.top = sprite.y;
+	
 
 	context.translate(sprite.left,sprite.top);
 	context.rotate(sprite.angle);
@@ -164,20 +160,17 @@ AlienPodSheetArtist.prototype = {
       var cell = this.cells[this.cellIndex];
 	 
 	  
-	sprite.left = sprite.x; 
-	sprite.top = sprite.y;
-
-	sprite.booster_flame.left = sprite.x; 
-	sprite.booster_flame.top = sprite.y; 
+	
 	 
 	context.save();
 	context.translate(sprite.left,sprite.top);
+	//context.rotate(0.1);
 
     context.drawImage(this.spritesheet, cell.left, cell.top,
                                           cell.width, cell.height,
                                           0, 0,
                                           cell.width, cell.height);
-	context.translate(5,12);	 
+	context.translate(5,13);	 
 	sprite.booster_flame.draw(context);
 	context.restore();	
 				  
@@ -202,8 +195,37 @@ GroundEXPSheetArtist = function (spritesheet, cells) {
 GroundEXPSheetArtist.prototype = {
    draw: function (sprite, context) {
       var cell = this.cells[this.cellIndex];
-  
+		
 	  sprite.left = sprite.x; 
+	  sprite.top = sprite.y;
+      context.drawImage(this.spritesheet, cell.left, cell.top,
+                                          cell.width, cell.height,
+                                          sprite.left, sprite.top,
+                                          cell.width, cell.height);
+   },
+
+   advance: function () {
+      if (this.cellIndex === this.cells.length-1) {
+        // this.cellIndex = 0;
+      }
+      else {
+         this.cellIndex++
+		}
+   }
+};
+
+GrootExplotionSheetArtist = function (spritesheet, cells) {
+   this.cells = cells;
+   this.spritesheet = spritesheet;
+   this.cellIndex = 0;
+};
+
+GrootExplotionSheetArtist.prototype = {
+   draw: function (sprite, context) {
+      var cell = this.cells[this.cellIndex];
+		
+	 
+      sprite.left = sprite.x; 
 	  sprite.top = sprite.y;
       context.drawImage(this.spritesheet, cell.left, cell.top,
                                           cell.width, cell.height,
@@ -217,7 +239,38 @@ GroundEXPSheetArtist.prototype = {
       }
       else {
          this.cellIndex++
-		
+		}
+   }
+};
+
+
+TrokkieSheetArtist = function (spritesheet, cells) {
+   this.cells = cells;
+   this.spritesheet = spritesheet;
+   this.cellIndex = 0;
+};
+
+TrokkieSheetArtist.prototype = {
+   draw: function (sprite, context) {
+      var cell = this.cells[this.cellIndex];
+	 
+	  
+	  
+	  
+
+      context.drawImage(this.spritesheet, cell.left, cell.top,
+                                          cell.width, cell.height,
+                                          sprite.left, sprite.top,
+                                          cell.width, cell.height);
+   },
+
+   advance: function () {
+      if (this.cellIndex === this.cells.length-1) {
+         this.cellIndex = 0;
+      }
+      else {
+         this.cellIndex++;
+      }
    }
 };
 
@@ -300,7 +353,7 @@ Sprite.prototype = {
                  this.height - this.collisionMargin.bottom
       }
    },
-
+    
    drawCollisionRectangle: function () {
       var COLLISION_RECTANGLE_COLOR      = 'white', 
           COLLISION_RECTANGLE_LINE_WIDTH = 2.0,

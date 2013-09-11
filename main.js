@@ -56,6 +56,10 @@ var Moonrun = function () {
 	
 	// Elements
 	
+	this.camera = {scrollspeed : 0, follow: false}
+	
+	this.level = {trokkie_start_x: 100, floor: 108, trokkie_lock_x: 150}
+	
 	this.fpsElement = document.getElementById('fps');
 	
 	//Background Images
@@ -63,20 +67,22 @@ var Moonrun = function () {
 	
 	this.spritesheet = new Image(); // Al die sprites
 	
+	
+	
 	this.stars_offset1 = 0;
 	this.stars_offset2 = -this.background_image_width; //img width
-	this.stars_vel = 0.5;
+	this.stars_vel = this.camera.scrollspeed/2;
 	
 	
 	this.mountains_offset1 = 0;
 	this.mountains_offset2 = -this.background_image_width;
-	this.mountains_vel = 7; //makie sakie, want stars bepaal hom
+	this.mountains_vel = this.camera.scrollspeed*7; //makie sakie, want stars bepaal hom
 
 	this.rocks_offset1 = 0;
 	this.rocks_offset2 = -this.background_image_width;
-	this.rocks_vel = 22; //makie sakie, want stars bepaal hom
+	this.rocks_vel = this.camera.scrollspeed*22; //makie sakie, want stars bepaal hom
 	
-
+	
 	//Trokkie
 	
 	//Sprites...
@@ -196,9 +202,78 @@ var Moonrun = function () {
 	this.BulletCells = [
       { left: 0, top: 248, 
         width: 3, height: 4},
+		
+		{ left: 3, top: 248, 
+        width: 3, height: 4},
+	
+	{ left: 6, top: 248, 
+        width: 3, height: 4},
+		
+		{ left: 9, top: 248, 
+        width: 3, height: 4},
       
 		
    ];
+   
+   this.grootExplosion_WIDTH = 53;
+   this.grootExplosion_HEIGHT = 40;
+   
+   
+   this.grootExplosionCells = [
+     { left: 0, top: 252, 
+        width: 53, height: 40},
+	 
+	 { left: this.grootExplosion_WIDTH, top: 252, 
+        width: 53, height: 40},
+	
+     { left: this.grootExplosion_WIDTH*2, top: 252, 
+        width: 53, height: 40}, 	
+		
+     { left: this.grootExplosion_WIDTH*3, top: 252, 
+        width: 53, height: 40},  
+		
+	 { left: this.grootExplosion_WIDTH*4, top: 252, 
+        width: 53, height: 40},
+		
+	 { left: this.grootExplosion_WIDTH*5, top: 252, 
+        width: 53, height: 40},
+		
+	 { left: this.grootExplosion_WIDTH*6, top: 252, 
+        width: 53, height: 40},
+		
+	 { left: this.grootExplosion_WIDTH*7, top: 252, 
+        width: 53, height: 40},
+		
+	 { left: this.grootExplosion_WIDTH*8, top: 252, 
+        width: 53, height: 40},
+		
+	 { left: 0, top: 292, 
+        width: 53, height: 40},	
+	
+ 	 { left: this.grootExplosion_WIDTH, top: 292, 
+         width: 53, height: 40},
+		 
+	 { left: this.grootExplosion_WIDTH*2, top: 292, 
+         width: 53, height: 40},
+
+	 { left: this.grootExplosion_WIDTH*3, top: 292, 
+			 width: 53, height: 40},
+
+	 { left: this.grootExplosion_WIDTH*4, top: 292, 
+			 width: 53, height: 40},
+
+	 { left: this.grootExplosion_WIDTH*5, top: 292, 
+			 width: 53, height: 40},		
+	
+	{ left: this.grootExplosion_WIDTH*6, top: 292, 
+			 width: 53, height: 40},					 
+
+		
+   ];
+   
+   
+   
+   
 	
 	//Data...
 	
@@ -206,7 +281,7 @@ var Moonrun = function () {
 	this.alienPodData =  {x: 150,  y: 90, speed:26};
 	
 	
-	this.trokkieData =  {x: 150,  y: 90, speed:26};
+	this.trokkieData =  {x: this.level.trokkie_start_x,  y: 90, speed:22}; //speed 22 is werk goed saam met camera scrollspeed 1
 	
 	this.grootwielData = {x: 18, y:11, angle:0, radius:4.5, rotation_speed:0};
 	this.grootwielData.rotation_speed = ((1 / this.grootwielData.radius) * this.trokkieData.speed);
@@ -270,11 +345,26 @@ var Moonrun = function () {
 	
 	
 	//BEHAVIOURS
+	this.trokkieBehavior = {
+      execute: function (sprite, now, fps, context, 
+                         lastAnimationFrameTime) {
+         
+		sprite.myData.x += ((sprite.myData.speed - 22*sprite.myCamera.scrollspeed) * ((now - lastAnimationFrameTime) / GAMESPEED) );
+		 
+		 
+		sprite.left = sprite.myData.x; 
+		sprite.top = sprite.myData.y;
+      }
+    };
+	
 	
 	this.turretBehavior = {
       execute: function (sprite, now, fps, context, 
                          lastAnimationFrameTime) {
-         if (sprite.myData.cooldown < sprite.myData.max_cooldown) {
+        
+		//console.log("sprite.myData.cooldown: " + sprite.myData.cooldown);
+		
+		if (sprite.myData.cooldown < sprite.myData.max_cooldown) {
 		sprite.myData.cooldown += sprite.myData.cooldown_recharge * ((now - lastAnimationFrameTime) / GAMESPEED);
 		}
 		else sprite.myData.cooldown = sprite.myData.max_cooldown;
@@ -283,14 +373,31 @@ var Moonrun = function () {
 		 sprite.myData.charge_level += sprite.myData.charge_rate * ((now - lastAnimationFrameTime) / GAMESPEED);
 			
 		}
-      }
+      
+	    sprite.left = sprite.myData.x + sprite.myTrokkieData.x;
+		sprite.top = sprite.myData.y + sprite.myTrokkieData.y;
+	  }
     };
+	
+	this.gageBehavior = {
+      execute: function (sprite, now, fps, context, 
+                         lastAnimationFrameTime) {
+
+		sprite.left = sprite.myData.x + sprite.myTrokkieData.x;
+		sprite.top = sprite.myData.y + sprite.myTrokkieData.y;
+		sprite.myData.middle = ((sprite.myTurretData.charge_level-sprite.myTurretData.base_charge_level)/(sprite.myTurretData.max_charge_level-sprite.myTurretData.base_charge_level)) * sprite.myData.length
+		
+		
+		}
+	};					
 	
 	this.wielDraaiBehavior = {
       execute: function (sprite, now, fps, context, 
                          lastAnimationFrameTime) {
          sprite.myData.angle += sprite.myData.rotation_speed * ((now - lastAnimationFrameTime) / GAMESPEED);
-		 
+		 sprite.left = sprite.myData.x + sprite.myTrokkieData.x;
+		 sprite.top = sprite.myData.y + sprite.myTrokkieData.y;
+	 
       }
     };
 	this.bulletBehavior = {
@@ -306,13 +413,38 @@ var Moonrun = function () {
 		else
 		sprite.angle = (Math.atan(sprite.vely/sprite.velx))-(Math.PI/2)+(Math.PI);
 		
+		sprite.left = sprite.x; 
+		sprite.top = sprite.y;
+		
       }
     };
-   
+  
     this.groundEXPBehavior = {
       execute: function (sprite, now, fps, context, 
                          lastAnimationFrameTime) {
-	  sprite.x += Math.floor(sprite.velx) * (now - lastAnimationFrameTime) / GAMESPEED;
+	  
+		 
+		sprite.velx = sprite.myRocksVel; 
+		
+	  
+		sprite.x += Math.floor(sprite.velx) * (now - lastAnimationFrameTime) / GAMESPEED;
+	  
+	  
+	  }
+   };
+   
+     this.grootExplosionBehavior = {
+      execute: function (sprite, now, fps, context, 
+                         lastAnimationFrameTime) {
+	  
+		console.log("behaving");
+		
+		sprite.velx = sprite.myRocksVel; 
+		
+	  
+		sprite.x += Math.floor(sprite.velx) * (now - lastAnimationFrameTime) / GAMESPEED;
+	  
+	  
 	  }
    };
    
@@ -338,16 +470,20 @@ var Moonrun = function () {
              fps, 
              context,
              lastAnimationFrameTime);
+			 
+		sprite.left = sprite.x; 
+		sprite.top = sprite.y;
+
+		sprite.booster_flame.left = sprite.x; 
+		sprite.booster_flame.top = sprite.y; 	 
+				 
       }
    };
    //Artists
   
     this.gageArtist = {
       draw: function (sprite, context) {
-        sprite.left = sprite.myData.x + sprite.myTrokkieData.x;
-		sprite.top = sprite.myData.y + sprite.myTrokkieData.y;
-		sprite.myData.middle = ((sprite.myTurretData.charge_level-sprite.myTurretData.base_charge_level)/(sprite.myTurretData.max_charge_level-sprite.myTurretData.base_charge_level)) * sprite.myData.length
-		
+       
 		context.save();
 			context.beginPath();
 			context.lineWidth = sprite.myData.width;
@@ -383,7 +519,7 @@ var Moonrun = function () {
 Moonrun.prototype = {
     createSprites: function () {
       this.createTrokkieSprites(); 
-      this.createAlienPodSprite(-14,45);
+      
 	  this.addSpritesToSpriteArray();
     },
 
@@ -396,15 +532,44 @@ Moonrun.prototype = {
     },
    
 
-    
+    leveldo: function(){
+	
+		if (this.trokkieSprite.myData.x > this.level.trokkie_lock_x){
+			
+				this.camera.lock = true;
+				this.trokkieSprite.myData.x = this.level.trokkie_lock_x;
+				
+			}
+		
+		    
+			
+		if 	(this.camera.lock)	{
+		
+			this.camera.scrollspeed = this.trokkieSprite.myData.speed/22; //ratio constant
+		
+		}else{
+		
+			this.turretData.cooldown = 0;
+		
+		}
+		
+		this.stars_vel = this.camera.scrollspeed/2;
+		this.mountains_vel = this.camera.scrollspeed*7; //makie sakie, want stars bepaal hom
+		this.rocks_vel = this.camera.scrollspeed*22; //makie sakie, want stars bepaal hom
+		
+			
+	
+	},
 	createTrokkieSprites: function () {
 		this.trokkieSprite = new Sprite('trokkie',
-                          new SpriteSheetArtist(this.spritesheet, 
-                                                this.trokkieCell));
+                          new TrokkieSheetArtist(this.spritesheet, 
+                                                this.trokkieCell),
+												[this.trokkieBehavior]);
 											
 		this.trokkieSprite.width = this.trokkieCell[0].width;
 		this.trokkieSprite.height = this.trokkieCell[0].height;
 		this.trokkieSprite.myData = this.trokkieData;
+		this.trokkieSprite.myCamera = this.camera;
 		this.grootwielSprite = new Sprite('grootwiel',
                           new wielArtist(this.spritesheet, 
                                                 this.grootwielCell),[this.wielDraaiBehavior]);
@@ -426,7 +591,7 @@ Moonrun.prototype = {
 		this.turretSprite.myData.cooldown = 0;
 		this.turretSprite.myTrokkieData = this.trokkieData;   
 		
-		this.gageSprite = new Sprite('gage', this.gageArtist);
+		this.gageSprite = new Sprite('gage', this.gageArtist, [this.gageBehavior]);
 		this.gageSprite.myData = this.gageData; 
 		this.gageSprite.myTrokkieData = this.trokkieData;
 		this.gageSprite.myTurretData = this.turretData;
@@ -444,7 +609,7 @@ Moonrun.prototype = {
 			this.bulletCount = 0;
 		}
 		bulletSprite = new Sprite('bullet',
-							  new BulletSheetArtist(this.spritesheet, this.BulletCells), [this.bulletBehavior]);	
+							  new BulletSheetArtist(this.spritesheet, this.BulletCells), [new CycleBehavior(100, 0), this.bulletBehavior]);	
 		bulletSprite.myTurretData = this.turretData;
 		bulletSprite.power = this.turretData.charge_level;
 		bulletSprite.accy = this.MOONRAV;
@@ -499,20 +664,70 @@ Moonrun.prototype = {
 		groundEXPSprite.myBullet = bullet;
 		groundEXPSprite.x = Math.floor(bullet.x) - (groundEXPSprite.width/2);
 		groundEXPSprite.y = Math.floor(bullet.y) - (groundEXPSprite.height/2);
-		groundEXPSprite.velx = -this.rocks_vel;
+		groundEXPSprite.myRocksVel = -this.rocks_vel;
+		
 		this.effects.push(groundEXPSprite);
 	},
+	
+	
+	creategrootExplosionSprite : function (target) {
+		
+		var grootExplotionSprite; 
+		grootExplotionSprite = new Sprite('grootExplosion',
+                          new GrootExplotionSheetArtist(this.spritesheet, 
+                                                this.grootExplosionCells),
+												[ new CycleBehavior(40, 0), this.grootExplosionBehavior ]
+												);	
+		grootExplotionSprite.width = this.grootExplosionCells[0].width;
+		grootExplotionSprite.height = this.grootExplosionCells[0].height;
+		grootExplotionSprite.myTarget = target;
+		grootExplotionSprite.x = Math.floor(target.x) - (grootExplotionSprite.width/2) + (7);
+		grootExplotionSprite.y = Math.floor(target.y) - (grootExplotionSprite.height/2) + (9);
+		grootExplotionSprite.myRocksVel = -this.rocks_vel;
+		
+		console.log(grootExplotionSprite);
+		
+		this.effects.push(grootExplotionSprite);
+	},
+	
 
 	bulletCollision : function(){
- 	  var sprite;
+ 	  var Bsprite;
+	  var Tsprite;
       for (var i=0; i < this.bulletsSprites.length; ++i) {
-         sprite = this.bulletsSprites[i];
-		 if (sprite.y > 108){
+         Bsprite = this.bulletsSprites[i];
+		 if (Bsprite.y > this.level.floor){
 							
-			this.creategroundEXPSprite(this.bulletsSprites[i]);
+			
+			this.creategroundEXPSprite(Bsprite);
+			//this.creategrootExplosionSprite(this.bulletsSprites[i]);
+	
 			this.bulletsSprites.splice(i,1);
 			this.bulletHitGroundSound.play();
 		 }
+			for (var j=0; j < this.targetSprites.length; ++j) {
+			 Tsprite = this.targetSprites[j]; 
+				
+				/*	return NOT (
+		(Rect1.Bottom < Rect2.Top) OR
+		(Rect1.Top > Rect2.Bottom) OR
+		(Rect1.Left > Rect2.Right) OR
+		(Rect1.Right < Rect2.Left) )*/
+				
+				if (!((Tsprite.y + Tsprite.height < Bsprite.y) || (Tsprite.y > Bsprite.y) || (Tsprite.x > Bsprite.x) || (Tsprite.x + Tsprite.width < Bsprite.x))){
+				
+				
+					this.creategrootExplosionSprite(Tsprite);
+					this.bulletsSprites.splice(i,1);
+					this.targetSprites.splice(j,1);
+					this.AlienExplodesSound.play();
+				}
+				
+				
+			
+			
+			} 
+		
 		} 
 	},
 	
@@ -543,7 +758,7 @@ Moonrun.prototype = {
       var sprite;
       for (var i=0; i < this.effects.length; ++i) {
          sprite = this.effects[i];
-		//	console.log("this.isSpriteInView(sprite) : " + this.isSpriteInView(sprite));
+		
          if (sprite.visible && this.isSpriteInView(sprite)) {
             sprite.update(now, 
              this.fps, 
@@ -588,12 +803,11 @@ Moonrun.prototype = {
       for (var i=0; i < this.sprites.length; ++i) {
          sprite = this.sprites[i];
 
-         if (sprite.visible && this.isSpriteInView(sprite)) {
-            sprite.update(now, 
+             sprite.update(now, 
              this.fps, 
              this.ctx,
              this.lastAnimationFrameTime);
-         }
+         
       }
     },
 	
@@ -668,6 +882,7 @@ Moonrun.prototype = {
 	  
 	  this.keyboard();
 	  this.timer++;	
+	  this.leveldo();
 	  this.setStartBackgroundOffset(now);
 	  this.small_draw(now);
 	  this.grootmaak();
@@ -838,6 +1053,7 @@ Moonrun.prototype = {
 	  this.spritesheet.src = 'images/spritesheet.png';
       this.turretShootSound = new Audio("nes-13-00.wav");
 	  this.bulletHitGroundSound = new Audio("nes-00-00.wav");
+	  this.AlienExplodesSound = new Audio("nes-15-00.wav");
 
       this.spritesheet.onload = function (e) {
 		moonrun.startGame();
