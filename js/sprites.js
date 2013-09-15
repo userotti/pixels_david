@@ -65,7 +65,7 @@ turretArtist.prototype = {
 			context.beginPath();
 			context.lineWidth = sprite.myData.width;
 			context.moveTo(sprite.left,sprite.top);
-			context.lineTo(sprite.left+(((sprite.myData.cooldown)/(sprite.myData.max_cooldown))*4)+5, sprite.top);
+			context.lineTo(sprite.left+(((sprite.myCurrentWeapon.cooldown)/(sprite.myCurrentWeapon.max_cooldown))*4)+5, sprite.top);
 			context.strokeStyle = sprite.myData.color;
 			context.stroke();
 		
@@ -130,10 +130,7 @@ AlienPodPartSheetArtist.prototype = {
       var cell = this.cells[this.cellIndex];
 	 
 	
-		context.translate(sprite.special_mid_x,sprite.special_mid_y);
-	
-		
-	
+	context.translate(sprite.special_mid_x,sprite.special_mid_y);
 	context.translate(sprite.left,sprite.top);
 	context.rotate(sprite.angle);
 	context.translate(-sprite.special_mid_x,-sprite.special_mid_y);
@@ -224,16 +221,21 @@ AlienPodSheetArtist.prototype = {
       else {
          this.cellIndex++
       }
+   },
+   
+   set_cells: function (cells){
+	this.cells = cells
+	this.cellIndex = 0;
    }
 };
 
-GroundEXPSheetArtist = function (spritesheet, cells) {
+GroundDirtExplosionSheetArtist = function (spritesheet, cells) {
    this.cells = cells;
    this.spritesheet = spritesheet;
    this.cellIndex = 0;
 };
 
-GroundEXPSheetArtist.prototype = {
+GroundDirtExplosionSheetArtist.prototype = {
    draw: function (sprite, context) {
       var cell = this.cells[this.cellIndex];
 		
@@ -254,6 +256,47 @@ GroundEXPSheetArtist.prototype = {
 		}
    }
 };
+
+
+HitSparksSheetArtist = function (spritesheet, cells) {
+   this.cells = cells;
+   this.spritesheet = spritesheet;
+   this.cellIndex = 0;
+};
+
+HitSparksSheetArtist.prototype = {
+   draw: function (sprite, context) {
+      var cell = this.cells[this.cellIndex];
+		
+	 
+      sprite.left = sprite.x; 
+	  sprite.top = sprite.y;
+	  
+	  context.translate(sprite.left,sprite.top);
+	 
+	  context.translate(sprite.width/2,sprite.height/2);
+      
+	  context.rotate(sprite.rotation);
+	  
+	  context.translate(-sprite.width/2,-sprite.height/2);
+	  
+	  
+      context.drawImage(this.spritesheet, cell.left, cell.top,
+                                          cell.width, cell.height,
+                                          0, 0,
+                                          cell.width, cell.height);
+   },
+
+   advance: function () {
+      if (this.cellIndex === this.cells.length-1) {
+         //this.cellIndex = 0;
+      }
+      else {
+         this.cellIndex++
+		}
+   }
+};
+
 
 GrootExplotionSheetArtist = function (spritesheet, cells) {
    this.cells = cells;
@@ -315,6 +358,33 @@ TrokkieSheetArtist.prototype = {
    }
 };
 
+
+TargetDebreSheetArtist = function (spritesheet, cells, cellnum) {
+   this.cells = cells;
+   this.spritesheet = spritesheet;
+   this.cellIndex = cellnum;
+   console.log("cellnum: " + cellnum);
+};
+
+TargetDebreSheetArtist.prototype = {
+   draw: function (sprite, context) {
+      var cell = this.cells[this.cellIndex];
+	 
+	  context.translate(sprite.special_mid_x,sprite.special_mid_y);
+	  context.translate(sprite.left,sprite.top);
+      context.rotate(sprite.angle);
+ 	  context.translate(-sprite.special_mid_x,-sprite.special_mid_y);
+
+      context.drawImage(this.spritesheet, cell.left, cell.top,
+                                          cell.width, cell.height,
+                                          0, 0,
+                                          cell.width, cell.height);
+   },
+
+   advance: function () {
+      
+   }
+};
 
 SpriteSheetArtist = function (spritesheet, cells) {
    this.cells = cells;
