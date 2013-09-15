@@ -31,7 +31,7 @@ CycleBehavior.prototype = {
 
       if (this.interval && sprite.artist.cellIndex === 0) {
          
-		 console.log(this.interval);
+		 
 		 if (now - this.lastAdvance > this.interval) {
             sprite.artist.advance();
 			      this.lastAdvance = now;

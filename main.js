@@ -298,6 +298,37 @@ var Moonrun = function () {
 		
    ];
    
+   
+   this.MetalBallBulletCells = [
+      { left: 12, top: 248, 
+        width: 2, height: 2},
+		
+	
+      
+		
+   ];
+   
+   
+   this.MachingunBulletCells = [
+      { left: 14, top: 248, 
+        width: 1, height: 2},
+			
+   ];
+   
+   
+   this.ShotgunBulletCells = [
+      { left: 15, top: 248, 
+        width: 1, height: 1},
+			
+   ];
+   
+   
+   this.RiotgunBulletCells = [
+      { left: 16, top: 248, 
+        width: 1, height: 2},
+			
+   ];
+   
    this.grootExplosion_WIDTH = 53;
    this.grootExplosion_HEIGHT = 40;
    
@@ -429,36 +460,125 @@ var Moonrun = function () {
 	
 	this.rocketLauncherWeapon = {
 	
+		bulletSpriteCells : this.RocketBulletCells,
+		
 		charge_level: 20*this.CHARGE_FACTOR,
 		charge_rate: 40*this.CHARGE_FACTOR,
 		base_charge_level: 20*this.CHARGE_FACTOR,
 		max_charge_level: 120*this.CHARGE_FACTOR,
 		autoRelease: false,
-		cooldown: 0,
+		cooldown: 100,
 		max_cooldown: 100, // recharge points
-		cooldown_recharge: 140, //recharge points per second
-		
+		cooldown_recharge: 50, //recharge points per second
+		angle_random_offset : 0,
 		charging : false,
-		damage: 20,
-		weapon_type: "rocketlauncher",
+		damage: 100,
+		type: "rocketlauncher",
 	
 	}
 	
 	this.basicCannonWeapon = {
 	
-		charge_level: 100*this.CHARGE_FACTOR,
-		charge_rate: 200*this.CHARGE_FACTOR,
-		base_charge_level: 100*this.CHARGE_FACTOR,
+		
+		bulletSpriteCells : this.MetalBallBulletCells,
+		
+		
+		
+		charge_level: 20*this.CHARGE_FACTOR,
+		charge_rate: 100*this.CHARGE_FACTOR,
+		base_charge_level: 20*this.CHARGE_FACTOR,
+		max_charge_level: 120*this.CHARGE_FACTOR,
+		autoRelease: false,
+		cooldown: 100,
+		max_cooldown: 100, // recharge points
+		cooldown_recharge: 130, //rec
+		//harge points per second
+		angle_random_offset : 0,
+		charging : false,
+		damage: 21,
+		type: "basiccannon",
+	}
+	
+	this.machineGunWeapon = {
+	
+		
+		bulletSpriteCells : this.MachingunBulletCells,
+	
+		
+		charge_level: 20*this.CHARGE_FACTOR,
+		charge_rate: 850*this.CHARGE_FACTOR,
+		base_charge_level: 20*this.CHARGE_FACTOR,
 		max_charge_level: 120*this.CHARGE_FACTOR,
 		autoRelease: true,
-		cooldown: 0,
+		cooldown: 100,
 		max_cooldown: 100, // recharge points
-		cooldown_recharge: 500, //recharge points per second
+		cooldown_recharge: 700, //rec
+		//harge points per second
+		
+		
+		angle_random_offset : 0.1,
 		
 		charging : false,
-		damage: 30,
+		damage: 6,
+		type: "machinegun",
 	
 	}
+	
+	
+	this.shotGunWeapon = {
+	
+		
+		bulletSpriteCells : this.ShotgunBulletCells,
+		
+		
+		
+		charge_level: 20*this.CHARGE_FACTOR,
+		charge_rate: 20*this.CHARGE_FACTOR,
+		base_charge_level: 20*this.CHARGE_FACTOR,
+		max_charge_level: 120*this.CHARGE_FACTOR,
+		autoRelease: false,
+		cooldown: 100,
+		max_cooldown: 100, // recharge points
+		cooldown_recharge: 30, //rec
+		//harge points per second
+		
+		angle_random_offset : 0.10,
+		
+		charging : false,
+		damage: 8,
+		type: "shotgun",
+		pelletcount : 9,
+	
+	}
+	
+	this.riotGunWeapon = {
+	
+		
+		bulletSpriteCells : this.RiotgunBulletCells,
+	
+		
+		charge_level: 50*this.CHARGE_FACTOR,
+		charge_rate: 250*this.CHARGE_FACTOR,
+		base_charge_level: 50*this.CHARGE_FACTOR,
+		max_charge_level: 120*this.CHARGE_FACTOR,
+		autoRelease: true,
+		cooldown: 100,
+		max_cooldown: 100, // recharge points
+		cooldown_recharge: 230, //rec
+		//harge points per second
+		
+		angle_random_offset : 0.30,
+		
+		charging : false,
+		damage: 16,
+		type: "shotgun",
+		pelletcount : 3,
+	
+	}
+	
+	
+	
+	
 	
 	this.bulletData = 	{ x: 50, y:50, velx:0, vely: 0, accx: 0, accy : 0, radius:2, angle: Math.PI+0.5, power:0, colour:'#887634'};
 		
@@ -468,6 +588,15 @@ var Moonrun = function () {
 	this.kleinwielSprite;
 	this.turretSprite;
 	this.gageSprite;
+	
+	this.selectedWeaponIndex = 0;
+	this.weapons = [];
+	
+	this.weapons.push(this.basicCannonWeapon);
+	this.weapons.push(this.machineGunWeapon);
+	this.weapons.push(this.rocketLauncherWeapon);
+	this.weapons.push(this.shotGunWeapon);
+	this.weapons.push(this.riotGunWeapon);	
 	
 	
 	this.effects = [];
@@ -503,7 +632,9 @@ var Moonrun = function () {
 		
 		if ((sprite.myCurrentWeapon.charging == true)&&(sprite.myCurrentWeapon.charge_level < sprite.myCurrentWeapon.max_charge_level)){
 		 sprite.myCurrentWeapon.charge_level += sprite.myCurrentWeapon.charge_rate * ((now - lastAnimationFrameTime) / GAMESPEED);
-			
+		
+			if (sprite.myCurrentWeapon.charge_level > sprite.myCurrentWeapon.max_charge_level)
+				sprite.myCurrentWeapon.charge_level = sprite.myCurrentWeapon.max_charge_level;
 		}
       
 	    sprite.left = sprite.myData.x + sprite.myTrokkieData.x;
@@ -678,7 +809,7 @@ var Moonrun = function () {
 			context.lineTo(sprite.left+sprite.myData.middle, sprite.top);
 		
 			
-			if (sprite.myWeaponData.charge_level > sprite.myWeaponData.max_charge_level)
+			if (sprite.myWeaponData.charge_level >= sprite.myWeaponData.max_charge_level)
 				context.strokeStyle = sprite.myData.color3;
 			else
 				context.strokeStyle = sprite.myData.color1;
@@ -799,7 +930,7 @@ Moonrun.prototype = {
 		this.turretSprite = new Sprite('turret', new turretArtist(), [this.turretBehavior]);
 		this.turretSprite.myData = this.turretData; 
 		this.turretSprite.myTrokkieData = this.trokkieData; 
-		this.turretSprite.myCurrentWeapon = this.basicCannonWeapon;		
+		this.turretSprite.myCurrentWeapon = this.weapons[this.selectedWeaponIndex];		
 		
 		this.gageSprite = new Sprite('gage', this.gageArtist, [this.gageBehavior]);
 		this.gageSprite.myData = this.gageData; 
@@ -808,7 +939,7 @@ Moonrun.prototype = {
 		this.gageSprite.myWeaponData = this.turretSprite.myCurrentWeapon;
 		
 	},
-	createBulletSprite : function () {
+	createBulletSprite : function (BulletCells) {
 	
 		var bulletSprite;
 	
@@ -819,7 +950,7 @@ Moonrun.prototype = {
 			this.bulletCount = 0;
 		}
 		bulletSprite = new Sprite('bullet',
-							  new BulletSheetArtist(this.spritesheet, this.RocketBulletCells), [new CycleBehavior(100, 0), this.bulletBehavior]);	
+							  new BulletSheetArtist(this.spritesheet, BulletCells), [new CycleBehavior(100, 0), this.bulletBehavior]);	
 		bulletSprite.myTurretData = this.turretData;
 		bulletSprite.power = this.turretSprite.myCurrentWeapon.charge_level;
 		bulletSprite.bulletDamage = this.turretSprite.myCurrentWeapon.damage;
@@ -828,18 +959,23 @@ Moonrun.prototype = {
 		bulletSprite.radius = this.bulletData.radius;
 		bulletSprite.angle = 0;
 		bulletSprite.rotation_speed = (Math.random()*10)+4;
+		bulletSprite.bulletType = this.turretSprite.myCurrentWeapon.type;
+		
+		bulletSprite.special_mid_x = 0;
+		bulletSprite.special_mid_y = 0;
+		
 		
 		bulletSprite.x = this.trokkieData.x + bulletSprite.myTurretData.x + Math.cos(bulletSprite.myTurretData.angle)*bulletSprite.myTurretData.length;
 		bulletSprite.y = this.trokkieData.y + bulletSprite.myTurretData.y + Math.sin(bulletSprite.myTurretData.angle)*bulletSprite.myTurretData.length;
-		bulletSprite.velx = Math.cos(bulletSprite.myTurretData.angle)*bulletSprite.power;
-		bulletSprite.vely = Math.sin(bulletSprite.myTurretData.angle)*bulletSprite.power;
+		bulletSprite.velx = Math.cos(bulletSprite.myTurretData.angle+(this.turretSprite.myCurrentWeapon.angle_random_offset*Math.random())-(this.turretSprite.myCurrentWeapon.angle_random_offset*Math.random()))*bulletSprite.power;
+		bulletSprite.vely = Math.sin(bulletSprite.myTurretData.angle+(this.turretSprite.myCurrentWeapon.angle_random_offset*Math.random())-(this.turretSprite.myCurrentWeapon.angle_random_offset*Math.random()))*bulletSprite.power;
 		
 		this.bulletsSprites.push(bulletSprite);
 	},
 
 	createHitSparks : function(px,py) {
 	var SparksSprite; 
-	SparksSprite = 	new Sprite('AlienPodBooster',
+	SparksSprite = 	new Sprite('sparks',
                           new HitSparksSheetArtist(this.spritesheet, 
                                                 this.hitSparksCells),
 												[ new CycleBehavior(50, 0)]	);	
@@ -933,6 +1069,9 @@ Moonrun.prototype = {
 	},
 	
 	creategroundDebreDropSprite : function (dropping_sprite) {
+		
+		
+		console.log("YOOO");
 		
 		var groundDebreDrop; 
 		groundDebreDrop = new Sprite('debregroundhit',
@@ -1097,7 +1236,7 @@ Moonrun.prototype = {
 		
 
 		if (Bsprite.x < 0){
-		
+			
 			this.bulletsSprites.splice(i,1);
 			
 		}else
@@ -1105,7 +1244,12 @@ Moonrun.prototype = {
 		if (Bsprite.y > this.level.floor){
 							
 			
-			this.creategroundDirtExplosionSprite(Bsprite);
+			console.log("BT" + Bsprite.bulletType);
+			
+			if ((Bsprite.bulletType == "shotgun") || (Bsprite.bulletType == "machinegun")) 
+			 this.creategroundDebreDropSprite(Bsprite);
+			else
+			 this.creategroundDirtExplosionSprite(Bsprite);
 			
 			this.bulletsSprites.splice(i,1);
 			this.bulletHitGroundSound.play();
@@ -1125,7 +1269,7 @@ Moonrun.prototype = {
 							Tsprite.defenceSystem.shieldOnStatus = false;
 						}else{
 							Tsprite.defenceSystem.hull -= Bsprite.bulletDamage;
-							if (!(Tsprite.defenceSystem.hull<0)) this.targetHitSound.play();
+							if (!(Tsprite.defenceSystem.hull<=0)) this.targetHitSound.play();
 							this.createHitSparks(Bsprite.x, Bsprite.y);
 						}
 						this.createTargetDebreSprite(Tsprite,this.targetDebreCells,Math.floor(1));	
@@ -1141,7 +1285,7 @@ Moonrun.prototype = {
 						}
 
 						if (Tsprite.defenceSystem.hull < Tsprite.defenceSystem.damagedlookzone){
-							console.log("yo");
+							
 							Tsprite.artist.set_cells(this.AlienPodDamagedLookCells);
 						
 						}
@@ -1190,8 +1334,24 @@ Moonrun.prototype = {
 		if (this.turretSprite.myCurrentWeapon.cooldown >= this.turretSprite.myCurrentWeapon.max_cooldown)
 		
 		{
-		
-			this.createBulletSprite();
+			if (this.turretSprite.myCurrentWeapon.type == "shotgun"){
+			
+				for (i=0 ; i < this.turretSprite.myCurrentWeapon.pelletcount; i++){
+				
+				
+					this.createBulletSprite(this.turretSprite.myCurrentWeapon.bulletSpriteCells);
+				
+				}
+			
+			}
+			
+			if ((this.turretSprite.myCurrentWeapon.type == "basiccannon") || (this.turretSprite.myCurrentWeapon.type == "machinegun") 
+			|| (this.turretSprite.myCurrentWeapon.type == "rocketlauncher")){
+				
+				this.createBulletSprite(this.turretSprite.myCurrentWeapon.bulletSpriteCells);
+			
+			}
+			
 			this.turretSprite.myCurrentWeapon.cooldown = 0;
 			if (this.turretSprite.myCurrentWeapon.autoRelease == false) this.turretShootSound.play();
 		}
@@ -1210,6 +1370,15 @@ Moonrun.prototype = {
       for (var i=0; i < this.effects.length; ++i) {
          sprite = this.effects[i];
 		
+		
+		 if (sprite.type == "sparks"){
+		
+			if (sprite.artist.cellIndex === sprite.artist.cells.length-1){
+				sprite.visible = false;
+				
+			
+			}
+		};
 		
 		 if (sprite.type == "alienpodpart"){
 				
@@ -1626,6 +1795,22 @@ var Key = {
 		 
 		  
 	   }
+	   
+	   if (key === 69) { // 'e'
+		
+		 moonrun.selectedWeaponIndex++;
+		 
+		 if (moonrun.selectedWeaponIndex >= moonrun.weapons.length)
+			moonrun.selectedWeaponIndex = 0;
+		 
+		 moonrun.turretSprite.myCurrentWeapon = moonrun.weapons[moonrun.selectedWeaponIndex]; 
+		 moonrun.gageSprite.myWeaponData = moonrun.turretSprite.myCurrentWeapon;
+		  
+	   }
+	 
+	   
+	   
+	   
 	   else if (key === 75 || key === 39) { // 'k' or right arrow
 		 
 	   }
