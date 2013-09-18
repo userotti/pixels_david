@@ -1,15 +1,21 @@
 
 #arena {
+   position: absolute;
    margin: 0 auto;
    width: 802px;
    height: 520px;
+   left: 0;
+   top: 0;
    
 }
 
+
+
 #game-canvas {
-   border: 0px solid blue; 
+   left: 0px; 
 }
-         
+ 
+ 
 #score {
    font: 46px fantasy;
    text-align: center;

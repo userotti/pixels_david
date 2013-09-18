@@ -54,19 +54,18 @@ turretArtist.prototype = {
    draw: function (sprite, context) {
       context.save(); 
 		
-		sprite.left = sprite.myData.x + sprite.myTrokkieData.x;
-		sprite.top = sprite.myData.y + sprite.myTrokkieData.y;
+		
 		
 		context.translate(sprite.left, sprite.top);
-		context.rotate(sprite.myData.angle);
+		context.rotate(sprite.angle);
 		context.translate(-sprite.left, -sprite.top);
 		
 		//console.log("sprite.myData.cooldown: " + sprite.myData.cooldown);
 			context.beginPath();
-			context.lineWidth = sprite.myData.width;
+			context.lineWidth = sprite.width;
 			context.moveTo(sprite.left,sprite.top);
 			context.lineTo(sprite.left+(((sprite.myCurrentWeapon.cooldown)/(sprite.myCurrentWeapon.max_cooldown))*4)+5, sprite.top);
-			context.strokeStyle = sprite.myData.color;
+			context.strokeStyle = sprite.color;
 			context.stroke();
 		
 		context.restore();
@@ -83,13 +82,13 @@ turretArtist.prototype = {
 };
 
 
-BulletSheetArtist = function (spritesheet, cells) {
+TravelingBulletSheetArtist = function (spritesheet, cells) {
    this.cells = cells;
    this.spritesheet = spritesheet;
    this.cellIndex = 0;
 };
 
-BulletSheetArtist.prototype = {
+TravelingBulletSheetArtist.prototype = {
    draw: function (sprite, context) {
       var cell = this.cells[this.cellIndex];
 	 
@@ -103,6 +102,103 @@ BulletSheetArtist.prototype = {
                                           cell.width, cell.height,
                                           0, 0,
                                           cell.width, cell.height);
+			  
+   },
+
+   advance: function () {
+      if (this.cellIndex === this.cells.length-1) {
+         this.cellIndex = 0;
+		 
+      }
+      else {
+         this.cellIndex++
+		
+      }
+   }
+};
+
+
+
+SpinningBulletSheetArtist = function (spritesheet, cells) {
+   this.cells = cells;
+   this.spritesheet = spritesheet;
+   this.cellIndex = 0;
+};
+
+SpinningBulletSheetArtist.prototype = {
+   draw: function (sprite, context) {
+      var cell = this.cells[this.cellIndex];
+	 
+	
+	
+	context.save();
+	
+	
+	context.translate(sprite.left,sprite.top);
+	context.rotate(sprite.angle);
+	context.translate(-cell.width/2, -cell.height/2);
+		
+    context.drawImage(this.spritesheet, cell.left, cell.top,
+                                          cell.width, cell.height,
+                                          0, 0,
+                                          cell.width, cell.height);
+										  
+	context.restore();											  
+	
+	
+	
+	
+								  
+			  
+   },
+
+   advance: function () {
+      if (this.cellIndex === this.cells.length-1) {
+         this.cellIndex = 0;
+		 
+      }
+      else {
+         this.cellIndex++
+		
+      }
+   }
+};
+
+SpinningShiningBulletSheetArtist = function (spritesheet, cells) {
+   this.cells = cells;
+   this.spritesheet = spritesheet;
+   this.cellIndex = 0;
+};
+
+SpinningShiningBulletSheetArtist.prototype = {
+   draw: function (sprite, context) {
+      var cell = this.cells[this.cellIndex];
+	 
+	
+	
+	context.save();
+	
+	
+	context.translate(sprite.left,sprite.top);
+	context.rotate(sprite.angle);
+	context.translate(-cell.width/2, -cell.height/2);
+		
+    context.drawImage(this.spritesheet, cell.left, cell.top,
+                                          cell.width, cell.height,
+                                          0, 0,
+                                          cell.width, cell.height);
+										  
+	context.restore();											  
+	
+	
+	context.save();
+	
+		context.translate(sprite.left,sprite.top);
+		context.fillStyle  = "rgba(222,222,222,0.2)";
+		context.fillRect(-1,-1,2,1);
+		context.fillRect(-1,-1,1,2);
+		
+	context.restore();									  
 			  
    },
 
