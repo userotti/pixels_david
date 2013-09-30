@@ -2109,7 +2109,7 @@ ctx.restore();
 		  'nes-12-02.wav',
 		  'nes-00-00.wav',
 		  'nes-15-00.wav',
-		  'music/track1_c.wav',
+		  'music/level1.mp3',
 		],
 		this.finishedLoadingSounds
 		);
