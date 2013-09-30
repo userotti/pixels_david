@@ -1,3 +1,8 @@
+ @font-face {
+		font-family: 'press_start';
+		src: url('PressStart2P.ttf');
+		}
+
 
 #arena {
    position: absolute;
@@ -12,8 +17,23 @@
 
 
 #game-canvas {
-   left: 0px; 
-}
+    
+position:absolute;
+left:0px;
+top:0px;
+   
+   }
+ 
+#hud-canvas {
+    
+position:absolute;
+left:0px;
+top:0px;
+   
+   } 
+	
+
+ 
  
  
 #score {

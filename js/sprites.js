@@ -21,9 +21,9 @@ wielArtist.prototype = {
 	 
 	 
 	 context.translate(sprite.left, sprite.top);
-	 context.translate(sprite.myData.radius, sprite.myData.radius);
-	 context.rotate(sprite.myData.angle);
-	 context.translate(-sprite.myData.radius, -sprite.myData.radius);
+	 context.translate(sprite.radius, sprite.radius);
+	 context.rotate(sprite.angle);
+	 context.translate(-sprite.radius, -sprite.radius);
 	 context.translate(-sprite.left, -sprite.top);
 	 
 	
@@ -482,18 +482,18 @@ TargetDebreSheetArtist.prototype = {
    }
 };
 
-SpriteSheetArtist = function (spritesheet, cells) {
+HudSpriteSheetArtist = function (spritesheet, cells) {
    this.cells = cells;
    this.spritesheet = spritesheet;
    this.cellIndex = 0;
 };
 
-SpriteSheetArtist.prototype = {
+HudSpriteSheetArtist.prototype = {
    draw: function (sprite, context) {
       var cell = this.cells[this.cellIndex];
 	 
-	  sprite.left = sprite.myData.x; 
-	  sprite.top = sprite.myData.y;
+	  sprite.left = 5; 
+	  sprite.top = 107;
 
       context.drawImage(this.spritesheet, cell.left, cell.top,
                                           cell.width, cell.height,
@@ -510,6 +510,37 @@ SpriteSheetArtist.prototype = {
       }
    }
 };
+
+
+SpriteSheetArtist = function (spritesheet, cells) {
+   this.cells = cells;
+   this.spritesheet = spritesheet;
+   this.cellIndex = 0;
+};
+
+SpriteSheetArtist.prototype = {
+   draw: function (sprite, context) {
+      var cell = this.cells[this.cellIndex];
+	 
+	  sprite.left = sprite.x; 
+	  sprite.top = sprite.y;
+
+      context.drawImage(this.spritesheet, cell.left, cell.top,
+                                          cell.width, cell.height,
+                                          sprite.left, sprite.top,
+                                          cell.width, cell.height);
+   },
+
+   advance: function () {
+      if (this.cellIndex === this.cells.length-1) {
+         this.cellIndex = 0;
+      }
+      else {
+         this.cellIndex++;
+      }
+   }
+};
+
 
 // Sprites............................................................
 

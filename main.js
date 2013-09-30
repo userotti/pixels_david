@@ -1,4 +1,6 @@
 
+SOUNDCONTEXT = null;
+TSBSB = null;
 
 GAMESPEED_BASE = 900;
 GAMESPEED = GAMESPEED_BASE;
@@ -6,7 +8,11 @@ BULLETSPEED = 1;
 
 var Moonrun = function () {
    
+	//stupid constants
+	this.mountain_y_offsett = 4;
+	
 	// Super Constants...............................
+	
 	
 	this.smallCanvasWidth = 200;
 	this.smallCanvasHeight = 120;
@@ -18,10 +24,29 @@ var Moonrun = function () {
 
 	this.CHARGE_FACTOR = 1;
 	
+	this.soundEffect_volume = 0.4;
+	this.music_volume = 1;
 	
+
+	// loading
 	
+	this.imagesloaded = false;
+	this.soundsloaded = false;
+	
+	this.LOADED = false;
 	//Sound
-	this.turretShootSound = 0;
+	
+	this.soundContext = null;
+	this.bufferLoader = null;
+	/*
+	
+	this.TurretShootBigSoundSource = 0;
+	this.TurretShootBigSoundGainNode = 0;
+	
+	this.TurretShootSmallSoundSource = 0;
+	this.TurretShootSmallSoundGainNode = 0;*/
+	
+	
 	this.bulletHitGroundSound = 0;
 	//Canvas Creation..................
 	
@@ -33,9 +58,25 @@ var Moonrun = function () {
 	this.groot_game_canvas.width = this.smallCanvasWidth * this.canvas_upscale_x;
 	this.groot_game_canvas.height = this.smallCanvasHeight * this.canvas_upscale_y;
 	this.groot_game_canvas.id = "game-canvas";
+
+	
+	
+	this.hud_canvas = document.createElement( 'canvas' );
+    this.hud_canvas.width = (this.groot_game_canvas.width);
+	this.hud_canvas.height = (this.groot_game_canvas.height); 
+
+	this.hud_canvas.id = "hud-canvas";
+	
+	
 	
 	this.klein_game_canvas_context = this.klein_game_canvas.getContext( '2d' );
     this.groot_game_canvas_context = this.groot_game_canvas.getContext( '2d' );
+    this.hud_ctx = this.hud_canvas.getContext('2d');
+	
+	
+	this.current_hud_icon = 0;
+	
+	
 	
 	
 	//System
@@ -56,9 +97,7 @@ var Moonrun = function () {
 	
 	// Elements
 	
-	this.camera = {scrollspeed :0.7, follow: false}
 	
-	this.level = {trokkie_start_x: 150, floor: 108, trokkie_lock_x: 155, moongrav: 40}
 	
 	this.fpsElement = document.getElementById('fps');
 	
@@ -67,29 +106,36 @@ var Moonrun = function () {
 	
 	this.spritesheet = new Image(); // Al die sprites
 	
-	
-	
-	this.stars_offset1 = 0;
-	this.stars_offset2 = -this.background_image_width; //img width
-	this.stars_vel = this.camera.scrollspeed/2;
-	
-	
-	this.mountains_offset1 = 0;
-	this.mountains_offset2 = -this.background_image_width;
-	this.mountains_vel = this.camera.scrollspeed*7; //makie sakie, want stars bepaal hom
 
-	this.rocks_offset1 = 0;
-	this.rocks_offset2 = -this.background_image_width;
-	this.rocks_vel = this.camera.scrollspeed*22; //makie sakie, want stars bepaal hom
-	
-	
 	//Trokkie
 	
 	//Sprites...
 	
 	{ //CELLS
 	
+	this.MorterIconCell = [{ left: 0,   top: 349, 
+        width: 10, height:10 }];
+		
+	this.MetalBallIconCell = [{ left: 10,   top: 349, 
+        width: 10, height:10 }];
 	
+	this.MachinegunIconCell = [{ left: 20,   top: 349, 
+        width: 10, height:10 }];
+			
+	this.ShotgunIconCell = [{ left: 30,   top: 349, 
+        width: 10, height:10 }];
+			
+	this.RiotgunIconCell = [{ left: 40,   top: 349, 
+        width: 10, height:10 }];
+		
+	this.MetalScrapIconCell = [{ left: 50,   top: 349, 
+        width: 10, height:10 }];
+			
+	this.MetalShardIconCell = [{ left: 60,   top: 349, 
+        width: 10, height:10 }];
+		
+
+		
 	this.trokkieCell = [{ left: 0,   top: 186, 
         width: 40, height: 21 }];
 	
@@ -285,7 +331,7 @@ var Moonrun = function () {
 		
    ];
 	
-	this.RocketBulletCells = [
+	this.MorterBulletCells = [
       { left: 0, top: 248, 
         width: 3, height: 4},
 		
@@ -430,13 +476,6 @@ var Moonrun = function () {
 	this.alienPodData =  {x: 150,  y: 90, speed:26};
 	
 	
-	this.trokkieData =  {x: this.level.trokkie_start_x,  y: 90, speed:30}; //speed 22 is werk goed saam met camera scrollspeed 1
-	
-	this.grootwielData = {x: 18, y:11, angle:0, radius:4.5, rotation_speed:0};
-	this.grootwielData.rotation_speed = ((1 / this.grootwielData.radius) * this.trokkieData.speed);
-	
-	this.kleinwielData = {x: 2, y:13, angle:23, radius:3.5, rotation_speed:0};
-	this.kleinwielData.rotation_speed = ((1 / this.kleinwielData.radius) * this.trokkieData.speed);
 	
 	this.turretData = { 
 	
@@ -466,14 +505,18 @@ var Moonrun = function () {
 	
 	};
 	
-	this.rocketLauncherWeapon = {
-	
-		bulletSpriteCells : this.RocketBulletCells,
+	this.MorterLauncherWeapon = {
+		
+		icon : new Sprite('icon',
+                          new HudSpriteSheetArtist(this.spritesheet, 
+                                                this.MorterIconCell), []),
+		bulletSpriteCells : this.MorterBulletCells,
 		tarveling_style : "torpedo",
 		groundhit_type : "largecrator",
 		
 		min_angle : (Math.PI)+(Math.PI/3), //70 ISH
 		max_angle : Math.PI+(Math.PI/1.75), //120 ISH
+		angle_sensativity : 0.01,
 		
 		charge_level: 20*this.CHARGE_FACTOR,
 		charge_rate: 40*this.CHARGE_FACTOR,
@@ -486,19 +529,28 @@ var Moonrun = function () {
 		angle_random_offset : 0,
 		charging : false,
 		damage: 100,
-		type: "rocketlauncher",
-	
+		type: "Morterlauncher",
+		screen_name : "Morter",
+		ammo: 12,
+		
+		piercing: false,
+		pierce_level: 0,
+		
+		
 	}
 	
 	this.MetalScrapCannonWeapon = {
 	
-		
+		icon : new Sprite('icon',
+                          new HudSpriteSheetArtist(this.spritesheet, 
+                                                this.MetalScrapIconCell), []),
 		bulletSpriteCells : this.MetalScrapBulletCells,
 		tarveling_style : "spinning",
 		groundhit_type : "smallcrator",
 		
 		min_angle : Math.PI, //0
 		max_angle : (Math.PI)+(Math.PI/2), //90
+		angle_sensativity : 0.03,
 		
 		charge_level: 10*this.CHARGE_FACTOR,
 		charge_rate: 50*this.CHARGE_FACTOR,
@@ -513,18 +565,26 @@ var Moonrun = function () {
 		charging : false,
 		damage: 34,
 		type: "metalscrap",
+		screen_name : "Scrap Metal",
+		ammo: 342,
+		
+		piercing: false,
+		pierce_level: 0,
 	}
 	
 	
-	this.ScrapRepeaterWeapon = {
+	this.MetalShardLauncherWeapon = {
 	
-		
+		icon : new Sprite('icon',
+                          new HudSpriteSheetArtist(this.spritesheet, 
+                                                this.MetalShardIconCell), []),
 		bulletSpriteCells : this.MetalScrapBulletCells,
 		tarveling_style : "spinning",
 		groundhit_type : "smallcrator",
 		
 		min_angle : Math.PI,
 		max_angle : Math.PI+(Math.PI/1.5),
+		angle_sensativity : 0.04,
 		
 		charge_level: 10*this.CHARGE_FACTOR,
 		charge_rate: 100*this.CHARGE_FACTOR,
@@ -539,18 +599,26 @@ var Moonrun = function () {
 		charging : false,
 		damage: 14,
 		type: "metalscrap",
+		screen_name : "Metal Shard",
+		ammo: 7244,
+		
+		piercing: false,
+		pierce_level: 0,
 	}
 	
 	
 	this.MetalBallCannonWeapon = {
 	
-		
+		icon : new Sprite('icon',
+                          new HudSpriteSheetArtist(this.spritesheet, 
+                                                this.MetalBallIconCell), []),
 		bulletSpriteCells : this.MetalBallBulletCells,
 		tarveling_style : "spinning",
 		groundhit_type : "largecrator",
 		
 		min_angle : Math.PI,
 		max_angle : Math.PI+(Math.PI/1.5),
+		angle_sensativity : 0.02,
 		
 		charge_level: 40*this.CHARGE_FACTOR,
 		charge_rate: 50*this.CHARGE_FACTOR,
@@ -565,18 +633,26 @@ var Moonrun = function () {
 		charging : false,
 		damage: 51,
 		type: "metalball",
+		screen_name : "Metal Ball",
+		ammo: 344,
+		
+		piercing: true,
+		pierce_level: 0,
 	}
 	
 	
-	this.machineGunWeapon = {
+	this.MachineGunWeapon = {
 	
-		
+		icon : new Sprite('icon',
+                          new HudSpriteSheetArtist(this.spritesheet, 
+                                                this.MachinegunIconCell), []),
 		bulletSpriteCells : this.MachingunBulletCells,
 		tarveling_style : "torpedo",
 		groundhit_type : "smallcrator",
 		
 		min_angle : Math.PI,
 		max_angle : Math.PI+(Math.PI/1.5),
+		angle_sensativity : 0.04,
 		
 		charge_level: 20*this.CHARGE_FACTOR,
 		charge_rate: 850*this.CHARGE_FACTOR,
@@ -594,19 +670,26 @@ var Moonrun = function () {
 		charging : false,
 		damage: 6,
 		type: "machinegun",
-	
+		screen_name : "Machine Gun",
+		ammo: 244,
+		
+		piercing: false,
+		pierce_level: 0,
 	}
 	
 	
-	this.shotGunWeapon = {
+	this.ShotGunWeapon = {
 	
-		
+		icon : new Sprite('icon',
+                          new HudSpriteSheetArtist(this.spritesheet, 
+                                                this.ShotgunIconCell), []),
 		bulletSpriteCells : this.ShotgunBulletCells,
 		tarveling_style : "spinning",
 		groundhit_type : "smallcrator",
 		
 		min_angle : Math.PI,
 		max_angle : Math.PI+(Math.PI/1.5),
+		angle_sensativity : 0.02,
 		
 		charge_level: 50*this.CHARGE_FACTOR,
 		charge_rate: 50*this.CHARGE_FACTOR,
@@ -624,18 +707,26 @@ var Moonrun = function () {
 		damage: 13,
 		type: "shotgun",
 		pelletcount : 9,
+		screen_name : "Shotgun",
+		ammo: 174,
+	
+		piercing: false,
+		pierce_level: 0,
 	
 	}
 	
 	this.riotGunWeapon = {
 		
-		
+		icon : new Sprite('icon',
+                          new HudSpriteSheetArtist(this.spritesheet, 
+                                                this.RiotgunIconCell), []),
 		bulletSpriteCells : this.RiotgunBulletCells,
 		tarveling_style : "spinning",
 		groundhit_type : "smallcrator",
 		
 		min_angle : Math.PI,
 		max_angle : Math.PI+(Math.PI/1.5),
+		angle_sensativity : 0.04,
 		
 		charge_level: 50*this.CHARGE_FACTOR,
 		charge_rate: 250*this.CHARGE_FACTOR,
@@ -651,9 +742,13 @@ var Moonrun = function () {
 		
 		charging : false,
 		damage: 16,
-		type: "shotgun",
 		pelletcount : 3,
-	
+		type: "shotgun",
+		screen_name : "Riotgun",
+		ammo: 784,
+		
+		piercing: false,
+		pierce_level: 0,
 	}
 	
 	
@@ -664,20 +759,20 @@ var Moonrun = function () {
 		
 	
 	this.trokkieSprite;
-	this.grootwielSprite;
+	this.grootWielSprite;
 	this.kleinwielSprite;
 	this.turretSprite;
 	this.gageSprite;
 	
 	this.selectedWeaponIndex = 0;
 	this.weapons = [];
-	this.weapons.push(this.ScrapRepeaterWeapon);
+	this.weapons.push(this.MetalShardLauncherWeapon);
 	this.weapons.push(this.MetalScrapCannonWeapon);	
 	this.weapons.push(this.MetalBallCannonWeapon);	
 
-	this.weapons.push(this.machineGunWeapon);
-	this.weapons.push(this.rocketLauncherWeapon);
-	this.weapons.push(this.shotGunWeapon);
+	this.weapons.push(this.MachineGunWeapon);
+	this.weapons.push(this.MorterLauncherWeapon);
+	this.weapons.push(this.ShotGunWeapon);
 	this.weapons.push(this.riotGunWeapon);	
 	
 	
@@ -694,11 +789,11 @@ var Moonrun = function () {
       execute: function (sprite, now, fps, context, 
                          lastAnimationFrameTime) {
          
-		sprite.myData.x += ((sprite.myData.speed - 22*sprite.myCamera.scrollspeed) * ((now - lastAnimationFrameTime) / GAMESPEED) );
+		sprite.x += ((sprite.speed - 22*sprite.myCamera.scrollspeed) * ((now - lastAnimationFrameTime) / GAMESPEED) );
 		 
 		 
-		sprite.left = sprite.myData.x; 
-		sprite.top = sprite.myData.y;
+		sprite.left = sprite.x; 
+		sprite.top = sprite.y;
       }
     };
 	
@@ -721,8 +816,8 @@ var Moonrun = function () {
 				sprite.myCurrentWeapon.charge_level = sprite.myCurrentWeapon.max_charge_level;
 		}
       
-	    sprite.left = sprite.x + sprite.myTrokkieData.x;
-		sprite.top = sprite.y + sprite.myTrokkieData.y;
+	    sprite.left = sprite.x + sprite.myTrokkie.x;
+		sprite.top = sprite.y + sprite.myTrokkie.y;
 	  }
     };
 	
@@ -730,8 +825,8 @@ var Moonrun = function () {
       execute: function (sprite, now, fps, context, 
                          lastAnimationFrameTime) {
 
-		sprite.left = sprite.myData.x + sprite.myTrokkieData.x;
-		sprite.top = sprite.myData.y + sprite.myTrokkieData.y;
+		sprite.left = sprite.myData.x + sprite.myTrokkie.x;
+		sprite.top = sprite.myData.y + sprite.myTrokkie.y;
 		sprite.myData.middle = ((sprite.myWeaponData.charge_level-sprite.myWeaponData.base_charge_level)/(sprite.myWeaponData.max_charge_level-sprite.myWeaponData.base_charge_level)) * sprite.myData.length
 		
 		
@@ -741,9 +836,9 @@ var Moonrun = function () {
 	this.wielDraaiBehavior = {
       execute: function (sprite, now, fps, context, 
                          lastAnimationFrameTime) {
-         sprite.myData.angle += sprite.myData.rotation_speed * ((now - lastAnimationFrameTime) / GAMESPEED);
-		 sprite.left = sprite.myData.x + sprite.myTrokkieData.x;
-		 sprite.top = sprite.myData.y + sprite.myTrokkieData.y;
+         sprite.angle += sprite.rotation_speed * ((now - lastAnimationFrameTime) / GAMESPEED);
+		 sprite.left = sprite.x + sprite.myTrokkie.x;
+		 sprite.top = sprite.y + sprite.myTrokkie.y;
 	 
       }
     };
@@ -960,11 +1055,40 @@ Moonrun.prototype = {
       this.sprites.push(this.turretSprite);
       this.sprites.push(this.trokkieSprite);
 	  this.sprites.push(this.gageSprite);
-      this.sprites.push(this.grootwielSprite);
+      this.sprites.push(this.grootWielSprite);
 	  this.sprites.push(this.kleinwielSprite);
     },
    
+    startLevel: function (level_name) {
+	 
+	if (level_name == "first"){
+	
+		this.camera = {scrollspeed :0.7, follow: false}
+		this.level = {trokkie_start_x: 150, floor: 100+this.mountain_y_offsett, trokkie_lock_x: 155, moongrav: 40}
+		this.stars_offset1 = 0;
+		this.stars_offset2 = -this.background_image_width; //img width
+		this.stars_vel = this.camera.scrollspeed/2;
+		
+		
+		this.mountains_offset1 = 0;
+		this.mountains_offset2 = -this.background_image_width;
+		this.mountains_vel = this.camera.scrollspeed*7; //makie sakie, want stars bepaal hom
 
+		this.rocks_offset1 = 0;
+		this.rocks_offset2 = -this.background_image_width;
+		this.rocks_vel = this.camera.scrollspeed*22; //makie sakie, want stars bepaal hom
+		
+		
+		this.trokkieStartData =  {x: this.level.trokkie_start_x,  y: this.level.floor-19+this.mountain_y_offsett, speed:30}; //speed 22 is werk goed saam met camera scrollspeed 1
+		
+	
+	}
+	
+	requestNextAnimationFrame(this.animate);
+	this.playLevelMusic(level_name);	
+    this.createSprites();
+    },
+	
     levelDo: function(){
 	
 		if (this.turretSprite.myCurrentWeapon.autoRelease == true)
@@ -978,10 +1102,10 @@ Moonrun.prototype = {
 				}
 		
 		
-		if (this.trokkieSprite.myData.x > this.level.trokkie_lock_x){
+		if (this.trokkieSprite.x > this.level.trokkie_lock_x){
 			
 				this.camera.lock = true;
-				this.trokkieSprite.myData.x = this.level.trokkie_lock_x;
+				this.trokkieSprite.x = this.level.trokkie_lock_x;
 				
 			}
 		
@@ -989,7 +1113,7 @@ Moonrun.prototype = {
 			
 		if 	(this.camera.lock)	{
 		
-			this.camera.scrollspeed = this.trokkieSprite.myData.speed/22; //ratio constant
+			this.camera.scrollspeed = this.trokkieSprite.speed/22; //ratio constant
 		
 		}else{
 		
@@ -1006,6 +1130,8 @@ Moonrun.prototype = {
 	},
 	
 	//CREATE METHODS
+	
+	
 	createTrokkieSprites: function () {
 
 		this.trokkieSprite = new Sprite('trokkie',
@@ -1015,43 +1141,64 @@ Moonrun.prototype = {
 											
 		this.trokkieSprite.width = this.trokkieCell[0].width;
 		this.trokkieSprite.height = this.trokkieCell[0].height;
-		this.trokkieSprite.myData = this.trokkieData;
+		
+		this.trokkieSprite.x = this.trokkieStartData.x;
+		this.trokkieSprite.y = this.trokkieStartData.y;
+		this.trokkieSprite.speed = this.trokkieStartData.speed;
+		
+		
+		
 		this.trokkieSprite.myCamera = this.camera;
-		this.grootwielSprite = new Sprite('grootwiel',
+		
+		this.grootWielSprite = new Sprite('grootwiel',
                           new wielArtist(this.spritesheet, 
                                                 this.grootwielCell),[this.wielDraaiBehavior]);
-		this.grootwielSprite.myTrokkieData = this.trokkieData;
-		this.grootwielSprite.myData = this.grootwielData;
-		this.grootwielSprite.width = this.grootwielCell[0].width;
-		this.grootwielSprite.height = this.grootwielCell[0].height;										
+		
+		this.grootWielSprite.myTrokkie = this.trokkieSprite;
+		this.grootWielSprite.x = 18;
+		this.grootWielSprite.y = 11;
+		this.grootWielSprite.angle = 0;
+		this.grootWielSprite.radius = 4.5;
+		this.grootWielSprite.rotation_speed = ((1 / this.grootWielSprite.radius) * this.grootWielSprite.myTrokkie.speed);
+		this.grootWielSprite.width = this.grootwielCell[0].width;
+		this.grootWielSprite.height = this.grootwielCell[0].height;										
 
 		this.kleinwielSprite = new Sprite('kleinwiel',
                           new wielArtist(this.spritesheet, 
                                                 this.kleinwielCell), [this.wielDraaiBehavior]);
-		this.kleinwielSprite.myTrokkieData = this.trokkieData;
-		this.kleinwielSprite.myData = this.kleinwielData;
+		
+		this.kleinwielSprite.myTrokkie = this.trokkieSprite;
+		this.kleinwielSprite.x = 2;
+		this.kleinwielSprite.y = 13;
+		this.kleinwielSprite.angle = 23;
+		this.kleinwielSprite.radius = 3.5;
+		this.kleinwielSprite.rotation_speed = ((1 / this.kleinwielSprite.radius) * this.kleinwielSprite.myTrokkie.speed);
 		this.kleinwielSprite.width = this.kleinwielCell[0].width;
 		this.kleinwielSprite.height = this.kleinwielCell[0].height;												
 												
 		this.turretSprite = new Sprite('turret', new turretArtist(), [this.turretBehavior]);
 		this.turretSprite.x = this.turretData.x; 
 		this.turretSprite.y = this.turretData.y; 
-		
 		this.turretSprite.width = this.turretData.width; 
 		this.turretSprite.length = this.turretData.length;
 		this.turretSprite.color = this.turretData.color;
 		this.turretSprite.charging = this.turretData.charging;
-		
 		this.turretSprite.angle = Math.PI;
-		
-		this.turretSprite.myTrokkieData = this.trokkieData; 
-		this.turretSprite.myCurrentWeapon = this.weapons[this.selectedWeaponIndex];		
+		this.turretSprite.myTrokkie = this.trokkieSprite;
 		
 		this.gageSprite = new Sprite('gage', this.gageArtist, [this.gageBehavior]);
 		this.gageSprite.myData = this.gageData; 
-		this.gageSprite.myTrokkieData = this.trokkieData;
+		this.gageSprite.myTrokkie = this.trokkieSprite;
 		this.gageSprite.myTurretData = this.turretData;
 		this.gageSprite.myWeaponData = this.turretSprite.myCurrentWeapon;
+		
+		this.turretSprite.myCurrentWeapon = this.weapons[this.selectedWeaponIndex];		
+		this.selectNextWeapon();
+		/*
+		this.current_hud_icon = this.turretSprite.myCurrentWeapon.icon;
+		this.hud_name_display_counter = 50;*/
+		
+		
 		
 	},
 	
@@ -1100,8 +1247,8 @@ Moonrun.prototype = {
 		bulletSprite.special_mid_y = 0;
 		
 		
-		bulletSprite.x = this.trokkieData.x + bulletSprite.myTurret.x + Math.cos(bulletSprite.myTurret.angle)*bulletSprite.myTurret.length;
-		bulletSprite.y = this.trokkieData.y + bulletSprite.myTurret.y + Math.sin(bulletSprite.myTurret.angle)*bulletSprite.myTurret.length;
+		bulletSprite.x = this.trokkieSprite.x + bulletSprite.myTurret.x + Math.cos(bulletSprite.myTurret.angle)*bulletSprite.myTurret.length;
+		bulletSprite.y = this.trokkieSprite.y + bulletSprite.myTurret.y + Math.sin(bulletSprite.myTurret.angle)*bulletSprite.myTurret.length;
 		bulletSprite.velx = Math.cos(bulletSprite.myTurret.angle+(this.turretSprite.myCurrentWeapon.angle_random_offset*Math.random())-(this.turretSprite.myCurrentWeapon.angle_random_offset*Math.random()))*bulletSprite.power;
 		bulletSprite.vely = Math.sin(bulletSprite.myTurret.angle+(this.turretSprite.myCurrentWeapon.angle_random_offset*Math.random())-(this.turretSprite.myCurrentWeapon.angle_random_offset*Math.random()))*bulletSprite.power;
 		
@@ -1173,7 +1320,7 @@ Moonrun.prototype = {
 		this.targetSprites.push(AlienPodSprite);
 	},
 
-	creategroundDirtExplosionSprite : function (dropping_sprite) {
+	createGroundDirtCratorSprite : function (dropping_sprite) {
 		
 		var groundDirtExplosion; 
 		groundDirtExplosion = new Sprite('EXP',
@@ -1199,11 +1346,11 @@ Moonrun.prototype = {
 		
 		
 		groundDirtExplosion.myRocksVel = -this.rocks_vel;
-		this.bulletHitGroundSound.play();
+		
 		this.effects.push(groundDirtExplosion);
 	},
 	
-	creategroundDirtDropSprite : function (dropping_sprite) {
+	createGroundDirtDropSprite : function (dropping_sprite) {
 		
 		
 		
@@ -1253,14 +1400,14 @@ Moonrun.prototype = {
 		
 		if (parttype == "left"){
 		alienPodPartSprite.velx = -(Math.random()*20 + 15);
-		alienPodPartSprite.vely = -(Math.random()*5 + 5);
+		alienPodPartSprite.vely = -(Math.random()*10);
 		alienPodPartSprite.special_mid_x = 3.5;
 		alienPodPartSprite.special_mid_y = 9.5;
 		}
 		
 		if (parttype == "right"){
 		alienPodPartSprite.velx = Math.random()*20 + 15;
-		alienPodPartSprite.vely = -(Math.random()*5 + 5)
+		alienPodPartSprite.vely = -(Math.random()*10)
 		alienPodPartSprite.special_mid_x = 9.5;
 		alienPodPartSprite.special_mid_y = 9.5;
 		}
@@ -1367,7 +1514,7 @@ Moonrun.prototype = {
 		 
 		
 
-		if (Bsprite.x < 0){
+		if ((Bsprite.x < 0) || (Bsprite.x > 200)){
 			
 			this.bulletsSprites.splice(i,1);
 			
@@ -1379,10 +1526,11 @@ Moonrun.prototype = {
 			
 			
 			if ((Bsprite.groundhit_type == "smallcrator"))
-			 this.creategroundDirtDropSprite(Bsprite);
-			if((Bsprite.groundhit_type == "largecrator"))
-			 this.creategroundDirtExplosionSprite(Bsprite);
-			
+			 this.createGroundDirtDropSprite(Bsprite);
+			if((Bsprite.groundhit_type == "largecrator")){
+			 this.createGroundDirtCratorSprite(Bsprite);
+			 this.playObjectHitGroundSound();
+			}
 			this.bulletsSprites.splice(i,1);
 			
 		}else
@@ -1401,7 +1549,7 @@ Moonrun.prototype = {
 							Tsprite.defenceSystem.shieldOnStatus = false;
 						}else{
 							Tsprite.defenceSystem.hull -= Bsprite.bulletDamage;
-							if (!(Tsprite.defenceSystem.hull<=0)) this.targetHitSound.play();
+							if (!(Tsprite.defenceSystem.hull<=0)) this.playTargetHitSound();
 							this.createHitSparks(Bsprite.x, Bsprite.y);
 						}
 						this.createTargetDebreSprite(Tsprite,this.targetDebreCells,Math.floor(1));	
@@ -1424,6 +1572,8 @@ Moonrun.prototype = {
 						
 						
 						
+							
+					
 						this.bulletsSprites.splice(i,1);		
 						
 					}
@@ -1451,7 +1601,7 @@ Moonrun.prototype = {
 						
 	
 	this.targetSprites.splice(TargetLoopIndex,1);
-	this.AlienExplodesSound.play();
+	this.playExplosionSound();
 		
 	},
 	
@@ -1465,7 +1615,8 @@ Moonrun.prototype = {
 		 
 		this.turretSprite.myCurrentWeapon = this.weapons[this.selectedWeaponIndex]; 
 		this.gageSprite.myWeaponData = this.turretSprite.myCurrentWeapon;
-		 
+		this.current_hud_icon = this.turretSprite.myCurrentWeapon.icon;	
+		this.hud_name_display_counter = 30;
 		 
 		if (this.turretSprite.angle < (this.turretSprite.myCurrentWeapon.min_angle))
 				this.turretSprite.angle = this.turretSprite.myCurrentWeapon.min_angle;
@@ -1476,7 +1627,7 @@ Moonrun.prototype = {
 			this.turretSprite.myCurrentWeapon.charge_level = this.turretSprite.myCurrentWeapon.base_charge_level;
 			this.turretSprite.myCurrentWeapon.charging = false;
 		 }
-	
+		
 	},
 	
 	
@@ -1502,17 +1653,20 @@ Moonrun.prototype = {
 			} else{ //any other weapon
 			
 			/*if ((this.turretSprite.myCurrentWeapon.type == "basiccannon") || (this.turretSprite.myCurrentWeapon.type == "machinegun") 
-			|| (this.turretSprite.myCurrentWeapon.type == "rocketlauncher")){*/
+			|| (this.turretSprite.myCurrentWeapon.type == "Morterlauncher")){*/
 				
 				this.createBulletSprite(this.turretSprite.myCurrentWeapon.bulletSpriteCells);
 			
 			}
 			
 			this.turretSprite.myCurrentWeapon.cooldown = 0;
-			if (this.turretSprite.myCurrentWeapon.autoRelease == false) this.turretShootSound.play();
+			if (this.turretSprite.myCurrentWeapon.autoRelease == false){ this.playTurretShootBigSound();} 
+			else
+			this.playTurretShootSmallSound();//this.turretShootSound.play();
 		}
 		this.turretSprite.myCurrentWeapon.charge_level = this.turretSprite.myCurrentWeapon.base_charge_level;
 		this.turretSprite.myCurrentWeapon.charging = false;
+		this.turretSprite.myCurrentWeapon.ammo -= 1;
 	},
 	
 	isSpriteInView: function(sprite) {
@@ -1540,8 +1694,8 @@ Moonrun.prototype = {
 				
 				if (sprite.y + sprite.special_mid_y > this.level.floor){
 				sprite.visible = false;
-				this.creategroundDirtExplosionSprite(sprite);
-				this.bulletHitGroundSound.play();
+				this.createGroundDirtCratorSprite(sprite);
+				this.playObjectHitGroundSound();
 				}
 			};
 			
@@ -1549,7 +1703,7 @@ Moonrun.prototype = {
 				
 				if (sprite.y + sprite.special_mid_y > this.level.floor+Math.floor(Math.random()*3)-Math.floor(Math.random()*3)){
 				sprite.visible = false;
-				this.creategroundDirtDropSprite(sprite);
+				this.createGroundDirtDropSprite(sprite);
 				
 				}
 			};	
@@ -1566,9 +1720,6 @@ Moonrun.prototype = {
 	     
 		}
     },
-	
-	
-	
 	
 	
 	updateBulletSprites: function (now) {
@@ -1661,7 +1812,9 @@ Moonrun.prototype = {
       }
     },
 	
-	small_draw: function(now){
+	
+	
+	small_draw: function(now,ctx){
 		
 		
 		this.bulletCollision();
@@ -1673,28 +1826,20 @@ Moonrun.prototype = {
 		
 		
 	
-		this.drawBackground(this.klein_game_canvas_context);
+		this.drawBackground(ctx);
 		
-		this.drawBullets(this.klein_game_canvas_context);
-		this.drawTargets(this.klein_game_canvas_context);
-		this.drawEffects(this.klein_game_canvas_context);
-		this.drawSprites(this.klein_game_canvas_context);
+		this.drawBullets(ctx);
+		this.drawTargets(ctx);
+		this.drawEffects(ctx);
+		this.drawSprites(ctx);
 		
-		this.drawForeground(this.klein_game_canvas_context);
+		this.drawForeground(ctx);
+		
+		
 	
 	},
 	
-	draw: function (now) {
-	  
-	  this.keyboard();
-	  this.timer++;	
-	  this.levelDo();
-	  this.setStartBackgroundOffset(now);
-	  this.small_draw(now);
-	  this.grootmaak(this.klein_game_canvas_context,this.groot_game_canvas_context);
 	
-	},
-  
     setStartBackgroundOffset: function(now) {
 	   
 	   this.stars_offset1 += this.stars_vel * (now - this.lastAnimationFrameTime) / GAMESPEED;
@@ -1737,15 +1882,17 @@ Moonrun.prototype = {
 	
 	
 	drawForeground: function(ctx) {
-	
+		ctx.drawImage(this.spritesheet,60,186,120,8,0,112,this.background_image_width,8);
 		ctx.translate(-this.rocks_offset1, 0);
-	    ctx.drawImage(this.spritesheet,0,177,this.background_image_width,9,0,106,this.background_image_width,9);
+	    ctx.drawImage(this.spritesheet,0,177,this.background_image_width,9,0,102+this.mountain_y_offsett,this.background_image_width,9);
 	    ctx.translate(this.rocks_offset1, 0);
 		
 		ctx.translate(-this.rocks_offset2, 0);
-	    ctx.drawImage(this.spritesheet,0,177,this.background_image_width,9,0,106,this.background_image_width,9);
+	    ctx.drawImage(this.spritesheet,0,177,this.background_image_width,9,0,102+this.mountain_y_offsett,this.background_image_width,9);
 	    ctx.translate(this.rocks_offset2, 0);
 	
+	
+		
 	},
 	
 	drawBackground: function(ctx) {
@@ -1759,24 +1906,120 @@ Moonrun.prototype = {
 				
 		ctx.translate(-this.mountains_offset1, 0);
 	  
-	    ctx.drawImage(this.spritesheet,0,120,this.background_image_width,51,0,69,this.background_image_width,51);
+	    ctx.drawImage(this.spritesheet,0,120,this.background_image_width,51,0,61+this.mountain_y_offsett,this.background_image_width,51);
 		ctx.translate(this.mountains_offset1, 0);
 		
 		ctx.translate(-this.mountains_offset2, 0);
-	    ctx.drawImage(this.spritesheet,0,120,this.background_image_width,51,0,69,this.background_image_width,51);
+	    ctx.drawImage(this.spritesheet,0,120,this.background_image_width,51,0,61+this.mountain_y_offsett,this.background_image_width,51);
 	    ctx.translate(this.mountains_offset2, 0);
 		
 		ctx.translate(-this.rocks_offset1, 0);
-	    ctx.drawImage(this.spritesheet,0,171,this.background_image_width,6,0,100,this.background_image_width,6);
+	    ctx.drawImage(this.spritesheet,0,171,this.background_image_width,6,0,92+this.mountain_y_offsett,this.background_image_width,6);
 	    ctx.translate(this.rocks_offset1, 0);
 		
 		ctx.translate(-this.rocks_offset2, 0);
-	    ctx.drawImage(this.spritesheet,0,171,this.background_image_width,6,0,100,this.background_image_width,6);
+	    ctx.drawImage(this.spritesheet,0,171,this.background_image_width,6,0,92+this.mountain_y_offsett,this.background_image_width,6);
 	    ctx.translate(this.rocks_offset2, 0);
+		
+		
 		
 	
 	},
+	  
+	
+	drawHudText: function(ctx){
 		
+	//ctx.fillStyle = '#433f46';
+		
+	//	ctx.fillRect(68,this.groot_game_canvas.height-40,200,30);
+		//ctx.drawImage()
+			
+	//	ctx.fillStyle = '#555511';
+	//	ctx.fillRect(68,this.groot_game_canvas.height-40,150,20);
+		
+		ctx.font = '12pt press_start';
+		ctx.fillStyle = '#BBB';
+		ctx.fillText(this.turretSprite.myCurrentWeapon.ammo,  70, this.groot_game_canvas.height-20);	
+	
+		
+		if (this.hud_name_display_counter > 0){
+			
+			ctx.fillStyle = '#91A283';
+			ctx.fillText(this.turretSprite.myCurrentWeapon.screen_name,  600, this.groot_game_canvas.height-20);	
+			this.hud_name_display_counter--;
+		} 
+	},
+	
+	drawHud: function(ctx){
+		
+	 // ctx.drawImage(this.groot_game_canvas,18,this.groot_game_canvas.height-40,150,40,18,this.groot_game_canvas.height-40,150,40);
+	//  ctx.drawImage(this.groot_game_canvas,18,this.groot_game_canvas.height-40,150,40,18,this.groot_game_canvas.height-40,150,40);
+	 
+ctx.save();
+
+ctx.setTransform(1, 0, 0, 1, 0, 0);
+ctx.clearRect (18,this.groot_game_canvas.height-40,150,40);	
+ctx.clearRect (580,this.groot_game_canvas.height-40,200,40);
+
+ctx.restore();
+
+
+   	 
+	  
+		this.current_hud_icon.draw(this.klein_game_canvas_context);
+	 
+	  this.drawHudText(ctx);
+	  /*
+	  ctx.fillStyle = '#000';
+	  ctx.fillRect(0,0,200,400);
+	 
+		  
+	  ctx.font = '12pt press_start';
+      ctx.fillStyle = '#667';
+	  ctx.fillText(this.turretSprite.myCurrentWeapon.screen_name, 20, 144);
+	  
+	  
+	  ctx.font = '10pt press_start';
+      ctx.fillStyle = '#445';
+	  ctx.fillText("Ammo: ",  20, 170);
+	 
+     
+      ctx.fillStyle = '#775110';
+	  ctx.fillText(this.turretSprite.myCurrentWeapon.ammo, 100, 170);
+	
+	 
+      ctx.fillStyle = '#445';
+	  
+	  ctx.fillText("Cooldown: " + this.turretSprite.myCurrentWeapon.cooldown, 20, 190);
+	  ctx.fillText("Damage: " + this.turretSprite.myCurrentWeapon.damage, 20, 210);
+	  ctx.fillText("Max Power: " + this.turretSprite.myCurrentWeapon.max_charge_level, 20, 230);
+	  ctx.fillText("Min Power: " + this.turretSprite.myCurrentWeapon.base_charge_level, 20, 250);
+	  ctx.fillText("Auto Release: ", 20, 270);
+	  ctx.fillText(this.turretSprite.myCurrentWeapon.autoRelease, 20, 290);*/
+	  
+	  
+	  
+	  
+	},
+	
+	draw: function (now) {
+	  
+	  this.timer++;	
+	 
+	  //
+	  
+	  
+	  this.setStartBackgroundOffset(now);
+	  this.small_draw(now,this.klein_game_canvas_context);
+	  this.drawHud(this.hud_ctx);
+	  this.grootmaak(this.klein_game_canvas_context,this.groot_game_canvas_context);
+	 
+	  	
+	  
+	 
+	
+	},
+  
 	// SOLID METHODS
 	
 	calculateFps: function(now) {
@@ -1815,6 +2058,7 @@ Moonrun.prototype = {
 					ctx2.fillStyle  = "rgba("+ this.imagedata.data[i]+","+ this.imagedata.data[i+1]+","+this.imagedata.data[i+2]+",255)";
 					ctx2.fillRect(x,y,1,1);
 				ctx2.restore();
+				
 			}
 			xi = xi + 1;
 		}
@@ -1829,7 +2073,10 @@ Moonrun.prototype = {
       }
       else {
          moonrun.fps = moonrun.calculateFps(now); 
-         moonrun.draw(now);
+         moonrun.keyboard();
+		 moonrun.levelDo();
+		 
+		 moonrun.draw(now);
          moonrun.lastAnimationFrameTime = now;
          requestNextAnimationFrame(moonrun.animate);
       }
@@ -1848,32 +2095,216 @@ Moonrun.prototype = {
       }
     },
   
+    loadSoundFiles: function(sc) {
+	  // Fix up prefixing
+	  
+	  this.soundContext = sc;
+
+	  this.bufferLoader = new BufferLoader(
+		this.soundContext,		[
+		  'nes-13-00.wav',
+		  'nes-02-00.wav',
+		  'nes-12-00.wav',
+		  'nes-12-01.wav',
+		  'nes-12-02.wav',
+		  'nes-00-00.wav',
+		  'nes-15-00.wav',
+		  'music/track1_c.wav',
+		],
+		this.finishedLoadingSounds
+		);
+
+	  this.bufferLoader.load();
+	},
+
+	playTurretShootBigSound: function(){
+	
+	 this.TurretShootBigSoundGainNode = this.soundContext.createGain();
+     
+	 this.TurretShootBigSoundSource = this.soundContext.createBufferSource();
+	 this.TurretShootBigSoundSource.buffer = this.bufferLoader.bufferList[0];
+	 this.TurretShootBigSoundSource.connect(this.TurretShootBigSoundGainNode);	 
+	 
+	 this.TurretShootBigSoundGainNode.connect(this.soundContext.destination);
+	 this.TurretShootBigSoundGainNode.gain.value = this.soundEffect_volume;
+	 
+	 this.TurretShootBigSoundSource.start(0);	 
+	},
+	
+	playTurretShootSmallSound: function(){
+	
+      this.TurretShootSmallSoundGainNode = this.soundContext.createGain();
+	  
+	  this.TurretShootSmallSoundSource = this.soundContext.createBufferSource();
+	  this.TurretShootSmallSoundSource.buffer = this.bufferLoader.bufferList[1];
+	  this.TurretShootSmallSoundSource.connect(this.TurretShootSmallSoundGainNode);
+	  
+	  this.TurretShootSmallSoundGainNode.connect(this.soundContext.destination);
+	  this.TurretShootSmallSoundGainNode.gain.value = this.soundEffect_volume;
+	  
+	  this.TurretShootSmallSoundSource.start(0);	 
+	},
+	
+	playTargetHitSound: function(){
+	  
+	  
+	  this.TargetHitSoundGainNode = this.soundContext.createGain();
+	  
+	  this.TargetHitSoundSource = this.soundContext.createBufferSource();
+	  this.TargetHitSoundSource.buffer = this.bufferLoader.bufferList[Math.floor(Math.random()*3)+2];
+	  this.TargetHitSoundSource.connect(this.TargetHitSoundGainNode);
+	  
+	  this.TargetHitSoundGainNode.connect(this.soundContext.destination);
+	  this.TargetHitSoundGainNode.gain.value = this.soundEffect_volume;
+	  
+	  this.TargetHitSoundSource.start(0);	
+      
+	},
+	
+	playObjectHitGroundSound: function(){
+	  
+	  
+	  this.ObjectHitGroundSoundGainNode = this.soundContext.createGain();
+	  
+	  this.ObjectHitGroundSoundSource = this.soundContext.createBufferSource();
+	  this.ObjectHitGroundSoundSource.buffer = this.bufferLoader.bufferList[5];
+	  this.ObjectHitGroundSoundSource.connect(this.ObjectHitGroundSoundGainNode);
+	  
+	  this.ObjectHitGroundSoundGainNode.connect(this.soundContext.destination);
+	  this.ObjectHitGroundSoundGainNode.gain.value = this.soundEffect_volume;
+	  
+	  this.ObjectHitGroundSoundSource.start(0);	
+      
+	},
+	
+	playExplosionSound: function(){
+	  
+	  
+	  this.ExplosionSoundGainNode = this.soundContext.createGain();
+	  
+	  this.ExplosionSoundSource = this.soundContext.createBufferSource();
+	  this.ExplosionSoundSource.buffer = this.bufferLoader.bufferList[6];
+	  this.ExplosionSoundSource.connect(this.ExplosionSoundGainNode);
+	  
+	  this.ExplosionSoundGainNode.connect(this.soundContext.destination);
+	  this.ExplosionSoundGainNode.gain.value = this.soundEffect_volume;
+	  
+	  this.ExplosionSoundSource.start(0);	
+      
+	},
+	
+	
+	playLevelMusic: function(level_name){
+	
+	  this.LevelMusicGainNode = this.soundContext.createGain();
+	  
+	  this.LevelMusicSource = this.soundContext.createBufferSource();
+	  if (level_name == "first")
+	    this.LevelMusicSource.buffer = this.bufferLoader.bufferList[7];
+		
+	  this.LevelMusicSource.connect(this.LevelMusicGainNode);
+	  
+	  this.LevelMusicGainNode.connect(this.soundContext.destination);
+	  this.LevelMusicGainNode.gain.value = this.music_volume;
+	  
+	  this.LevelMusicSource.loop = true;
+	  this.LevelMusicSource.start(0);	 
+    
+	  console.log("music?");
+	  
+	},
+	
+	
+	
+	//Hierie function word buite die game object gecall so this, werk nie.
+	finishedLoadingSounds: function () {
+		
+		moonrun.soundsloaded = true;
+		
+	},
+	
+	
+	
+  
   //INIT-----------------------------------------
    
-   initializeImages: function () {
+    loadImageFiles: function () {
+		
+	  this.spritesheet.src = 'images/spritesheet.png';
+      this.spritesheet.onload = function (e) {
+		
+		moonrun.imagesloaded = true;
+	
+      };
+    },
+	
+
+	loadingScreenStart: function () {
+	
+		requestNextAnimationFrame(this.animateLoading); 
+	
+	},
+	
+	
+	animateLoading: function() {
+		
+		moonrun.hud_ctx.clearRect (0,0,800,480);
+		
+	
+		moonrun.hud_ctx.font = '16pt press_start';
+		moonrun.hud_ctx.fillStyle ="#EEEEEE";
+		moonrun.hud_ctx.fillText("Loading...",400 - 20,240 - 40);
+	
+		moonrun.hud_ctx.font = '12pt press_start';
+		
+		
+		if (moonrun.soundsloaded == true){
+
+		moonrun.hud_ctx.fillStyle ="#32DD21";
+		moonrun.hud_ctx.fillText("Sound",400 - 20,240 + 22);
+		}else{
+		
+	
+		moonrun.hud_ctx.fillStyle ="#DD2343";
+		moonrun.hud_ctx.fillText("Sound",400 - 20,240 + 22);
+		}
+		
+		
+		if (moonrun.imagesloaded == true){
+		
+		moonrun.hud_ctx.fillStyle ="#32DD21";
+		moonrun.hud_ctx.fillText("Images",400 - 20,240 - 2);
+		}else{
+		
+		
+		moonrun.hud_ctx.fillStyle ="#DD2343";
+		moonrun.hud_ctx.fillText("Images",400 - 20,240 - 2);
+		}
+	
+		
+		if ((moonrun.imagesloaded == true) && (moonrun.soundsloaded == true)){
+	 	    moonrun.LOADED = true;
+		}
+	
+		//console.log("sounds loaded?" + moonrun.soundsloaded);	
+		if (moonrun.LOADED == true){
+			moonrun.hud_ctx.clearRect (0,0,800,480);
+			moonrun.startLevel("first");
+		}
+		else	
+			requestNextAnimationFrame(moonrun.animateLoading);
+	},
+	
+	appendCanvases: function () {
       
 	//  document.getElementById("arena").appendChild( this.klein_canvas );
 	  document.getElementById("arena").appendChild( this.groot_game_canvas );
-	 
-	 
-	  this.spritesheet.src = 'images/spritesheet.png';
-      this.turretShootSound = new Audio("nes-13-00.wav");
-	  this.bulletHitGroundSound = new Audio("nes-00-00.wav");
-	  this.AlienExplodesSound = new Audio("nes-15-00.wav");
-	  
-	   this.targetHitSound = new Audio("nes-02-00.wav");
+	  document.getElementById("arena").appendChild( this.hud_canvas );
 
-      this.spritesheet.onload = function (e) {
-		moonrun.startGame();
-      };
-   },
+	},
 
-   startGame: function () {
-	  moonrun.constructor();
-	  requestNextAnimationFrame(this.animate);
-   },
-
-   
+//CLEVER KEYBOARD 
+ 
 	keyboard: function() {
 		
 			if (Key.isDown(Key.a)){
@@ -1889,13 +2320,13 @@ Moonrun.prototype = {
 			
 			if (Key.isDown(Key.LEFT)){ 
 				if (this.turretSprite.angle > (this.turretSprite.myCurrentWeapon.min_angle))
-					this.turretSprite.angle = this.turretSprite.angle - 0.04;
+					this.turretSprite.angle = this.turretSprite.angle -  this.turretSprite.myCurrentWeapon.angle_sensativity;
 				else
 					this.turretSprite.angle = this.turretSprite.myCurrentWeapon.min_angle;
 			}		
 			if (Key.isDown(Key.RIGHT)){
 				if (this.turretSprite.angle < (this.turretSprite.myCurrentWeapon.max_angle))
-					this.turretSprite.angle = this.turretSprite.angle + 0.04;
+					this.turretSprite.angle = this.turretSprite.angle + this.turretSprite.myCurrentWeapon.angle_sensativity;
 				else
 					this.turretSprite.angle = this.turretSprite.myCurrentWeapon.max_angle;
 				
@@ -1965,8 +2396,23 @@ var Key = {
 	   }
 	 
 	   
+	   if (key === 70) { // 'f'
+		
+		 
+		moonrun.playLevelMusic();
+		
+		  
+	   }
 	   
 	   
+	    if (key === 71) { // 'g'
+		
+		 
+		//moonrun.LevelMusicSource.start(0);	 
+		
+		  
+	   }
+	    
 	   else if (key === 75 || key === 39) { // 'k' or right arrow
 		 
 	   }
@@ -1991,7 +2437,23 @@ var Key = {
 	   }
 	};
    
+	try{
+	   window.AudioContext = window.AudioContext || window.webkitAudioContext;
+	   }
+	   catch(e) {
+		alert('Web Audio API is not supported in this browser');
+	};
+
    
 var moonrun = new Moonrun();
-moonrun.initializeImages(); 
-moonrun.createSprites();
+
+moonrun.loadSoundFiles(new AudioContext());
+moonrun.loadImageFiles();
+
+
+
+moonrun.loadingScreenStart();
+
+moonrun.appendCanvases();
+
+
